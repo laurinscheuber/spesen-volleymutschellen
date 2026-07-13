@@ -104,6 +104,7 @@ export default function LoginPage() {
                     type="email"
                     placeholder="name@domain.ch"
                     required
+                    autoComplete="email"
                     disabled={loading}
                     className="pl-10 border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0] focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
                   />
@@ -122,6 +123,7 @@ export default function LoginPage() {
                     type="password"
                     placeholder="••••••••"
                     required
+                    autoComplete="current-password"
                     disabled={loading}
                     className="pl-10 border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0] focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
                   />

@@ -30,10 +30,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 text-foreground relative overflow-hidden">
+    <div className="flex min-h-screen items-center justify-center bg-[#1B255F] px-4 py-12 text-[#E5EAF7] relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/10 via-[#1B255F] to-[#1B255F] -z-10" />
       
-      <Card className="w-full max-w-md border-[#4B4B4B] bg-[#22307B]/40 backdrop-blur-xl text-foreground shadow-2xl">
+      <Card className="w-full max-w-md border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#4C6EBA]/10 text-[#4C6EBA] ring-1 ring-[#4C6EBA]/20">
             <Volleyball className="h-8 w-8 text-[#4C6EBA] animate-[spin_6s_linear_infinite]" />

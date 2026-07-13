@@ -18,6 +18,7 @@ interface Item {
   purpose: string
   receipt_url: string
   category_name: string
+  team?: string
 }
 
 interface ReportDetails {
@@ -206,6 +207,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
                     <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
                       <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
                       <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
+                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
                       <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
                       <TableHead className="text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
                       <TableHead className="w-16" />
@@ -224,7 +226,8 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
                           {new Date(item.date).toLocaleDateString('de-CH')}
                         </TableCell>
                         <TableCell className="text-[#E5EAF7]/80 text-xs font-medium">{item.category_name}</TableCell>
-                        <TableCell className="text-[#C0C0C0] text-xs truncate max-w-[160px]" title={item.purpose}>
+                        <TableCell className="text-[#E5EAF7]/80 text-xs">{item.team || 'Allgemein'}</TableCell>
+                        <TableCell className="text-[#C0C0C0] text-xs truncate max-w-[120px]" title={item.purpose}>
                           {item.purpose}
                         </TableCell>
                         <TableCell className="text-right text-white font-mono text-xs font-semibold">

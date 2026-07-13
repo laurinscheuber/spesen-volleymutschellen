@@ -23,6 +23,7 @@ interface CartItem {
   category_id: string
   category_name: string
   receipt_url: string
+  team?: string
 }
 
 export default function ExpenseCart({ initialCategories }: { initialCategories: Category[] }) {
@@ -33,12 +34,22 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [purpose, setPurpose] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [team, setTeam] = useState('')
   const [receiptUrl, setReceiptUrl] = useState('')
 
   const [isUploading, setIsUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+
+  const TEAMS = [
+    'Damen 1', 'Damen 2', 'Damen 3', 'Damen Ü32',
+    'Herren 1', 'Herren 2', 'Herren 3',
+    'Mixed',
+    'Juniorinnen 1 (U23)', 'Juniorinnen 2 (U23)', 'Juniorinnen 3 (U20)', 'Juniorinnen 4 (U18)', 'Juniorinnen 5 (U16)',
+    'Junioren 1 (U23)', 'Junioren 2 (U16)',
+    'Rookies (U14)', 'Kids'
+  ]
 
   const handleAddCurrentItem = (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,12 +72,14 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
       purpose: purpose.trim(),
       category_id: categoryId,
       category_name: selectedCategory ? selectedCategory.name : 'Unbekannt',
-      receipt_url: receiptUrl
+      receipt_url: receiptUrl,
+      team: team || undefined
     }])
 
     setAmount('')
     setPurpose('')
     setCategoryId('')
+    setTeam('')
     setReceiptUrl('')
   }
 
@@ -144,20 +157,45 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="category" className="text-[10px] font-bold uppercase tracking-wider text-[#C0C0C0]">Kategorie</label>
-                <Select value={categoryId} onValueChange={(val) => setCategoryId(val || '')} disabled={submitting}>
-                  <SelectTrigger className="border-[#4B4B4B] bg-[#1B255F]/50 text-white focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]">
-                    <SelectValue placeholder="Kategorie wählen..." />
-                  </SelectTrigger>
-                  <SelectContent className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7]">
-                    {initialCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id} className="hover:bg-[#1B255F] focus:bg-[#1B255F] cursor-pointer">
-                        {category.name}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="category" className="text-[10px] font-bold uppercase tracking-wider text-[#C0C0C0]">Kategorie</label>
+                  <Select value={categoryId} onValueChange={(val) => setCategoryId(val || '')} disabled={submitting}>
+                    <SelectTrigger className="w-full border-[#4B4B4B] bg-[#1B255F]/50 text-white focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]">
+                      <SelectValue placeholder="Kategorie wählen...">
+                        {initialCategories.find(c => c.id === categoryId)?.name}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7]">
+                      {initialCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id} className="hover:bg-[#1B255F] focus:bg-[#1B255F] cursor-pointer">
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="team" className="text-[10px] font-bold uppercase tracking-wider text-[#C0C0C0]">Team (Optional)</label>
+                  <Select value={team} onValueChange={(val) => setTeam(val || '')} disabled={submitting}>
+                    <SelectTrigger className="w-full border-[#4B4B4B] bg-[#1B255F]/50 text-white focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]">
+                      <SelectValue placeholder="Kein Team">
+                        {team || undefined}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7]">
+                      <SelectItem value="" className="hover:bg-[#1B255F] focus:bg-[#1B255F] cursor-pointer text-[#C0C0C0]">
+                        Kein Team / Allgemein
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      {TEAMS.map((t) => (
+                        <SelectItem key={t} value={t} className="hover:bg-[#1B255F] focus:bg-[#1B255F] cursor-pointer">
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -219,6 +257,7 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
                       <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
                         <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
                         <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
+                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
                         <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
                         <TableHead className="text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
                         <TableHead className="w-12" />
@@ -231,7 +270,8 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
                             {new Date(item.date).toLocaleDateString('de-CH')}
                           </TableCell>
                           <TableCell className="text-[#E5EAF7]/80 text-xs font-medium">{item.category_name}</TableCell>
-                          <TableCell className="text-[#C0C0C0] text-xs truncate max-w-[150px]">{item.purpose}</TableCell>
+                          <TableCell className="text-[#E5EAF7]/80 text-xs">{item.team || 'Allgemein'}</TableCell>
+                          <TableCell className="text-[#C0C0C0] text-xs truncate max-w-[120px]" title={item.purpose}>{item.purpose}</TableCell>
                           <TableCell className="text-right text-white font-mono text-xs font-semibold">CHF {item.amount.toFixed(2)}</TableCell>
                           <TableCell className="text-right">
                             <Button

@@ -45,6 +45,7 @@ export default async function AdminReportPage(props: { params: Promise<{ id: str
         date,
         purpose,
         receipt_url,
+        team,
         categories (
           name
         )
@@ -64,6 +65,7 @@ export default async function AdminReportPage(props: { params: Promise<{ id: str
     date: item.date,
     purpose: item.purpose,
     receipt_url: item.receipt_url,
+    team: item.team,
     category_name: item.categories?.name || 'Unbekannt',
   }))
 

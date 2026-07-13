@@ -36,6 +36,7 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
         date,
         purpose,
         receipt_url,
+        team,
         categories (
           name
         )
@@ -174,6 +175,7 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
                       <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
                         <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
                         <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
+                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
                         <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
                         <TableHead className="text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
                         <TableHead className="w-28" />
@@ -186,6 +188,7 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
                             {new Date(item.date).toLocaleDateString('de-CH')}
                           </TableCell>
                           <TableCell className="text-[#E5EAF7]/80 text-xs">{item.categories?.name}</TableCell>
+                          <TableCell className="text-[#E5EAF7]/80 text-xs">{item.team || 'Allgemein'}</TableCell>
                           <TableCell className="text-[#C0C0C0] text-xs whitespace-pre-wrap">{item.purpose}</TableCell>
                           <TableCell className="text-right text-white font-mono text-xs font-semibold">
                             CHF {Number(item.amount).toFixed(2)}

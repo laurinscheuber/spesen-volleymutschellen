@@ -45,6 +45,7 @@ export async function GET(request: Request) {
         amount,
         date,
         purpose,
+        team,
         categories (
           name
         )
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
   }
 
   // 3. Build CSV
-  const headers = ['Datum', 'Mitglied', 'Zweck', 'Kategorie', 'Betrag', 'IBAN', 'Auszahlungsdatum']
+  const headers = ['Datum', 'Mitglied', 'Zweck', 'Kategorie', 'Team', 'Betrag', 'IBAN', 'Auszahlungsdatum']
   const delimiter = ';'
   
   const csvLines = [headers.join(delimiter)]
@@ -82,12 +83,14 @@ export async function GET(request: Request) {
       const cleanPurpose = `"${(item.purpose || '').replace(/"/g, '""')}"`
       const cleanName = `"${(userProfile?.full_name || '').replace(/"/g, '""')}"`
       const cleanCategory = `"${categoryName.replace(/"/g, '""')}"`
+      const cleanTeam = `"${(item.team || 'Allgemein').replace(/"/g, '""')}"`
 
       const row = [
         itemDateFormatted,
         cleanName,
         cleanPurpose,
         cleanCategory,
+        cleanTeam,
         amount,
         userProfile?.iban || '',
         paidAtFormatted

@@ -12,6 +12,7 @@ export async function submitExpenseReport(
     purpose: string
     category_id: string
     receipt_url: string
+    team?: string
   }>
 ) {
   if (!items || items.length === 0) {
@@ -59,6 +60,7 @@ export async function submitExpenseReport(
     purpose: item.purpose,
     category_id: item.category_id,
     receipt_url: item.receipt_url,
+    team: item.team || null,
   }))
 
   const { error: itemsError } = await supabase

@@ -44,6 +44,7 @@ CREATE TABLE public.expense_items (
   purpose TEXT NOT NULL,
   category_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT NOT NULL,
   receipt_url TEXT NOT NULL,
+  team TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

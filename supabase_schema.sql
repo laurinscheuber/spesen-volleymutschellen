@@ -301,3 +301,15 @@ INSERT INTO public.categories (name, is_active) VALUES
   ('Fahrtkosten / Transport', true),
   ('Sonstiges', true)
 ON CONFLICT (name) DO NOTHING;
+
+-- 15. Create Storage Bucket and Policies
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('receipts', 'receipts', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Allow authenticated uploads to receipts" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'receipts');
+
+CREATE POLICY "Allow public reads of receipts" ON storage.objects
+  FOR SELECT TO public USING (bucket_id = 'receipts');
+

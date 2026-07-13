@@ -1,27 +1,46 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { headers } from 'next/headers'
 
-export async function signInWithMagicLink(formData: FormData) {
+export async function signInWithPassword(formData: FormData) {
   const email = formData.get('email') as string
-  if (!email) {
-    return { error: 'E-Mail-Adresse ist erforderlich.' }
+  const password = formData.get('password') as string
+
+  if (!email || !password) {
+    return { error: 'E-Mail und Passwort sind erforderlich.' }
   }
 
   const supabase = await createClient()
-  const origin = (await headers()).get('origin') || 'http://localhost:3000'
-
-  const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signInWithPassword({
     email,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
+    password,
   })
 
   if (error) {
-    console.error('Magic link error:', error)
-    return { error: 'Fehler beim Senden des Magic Links. Bitte überprüfe deine E-Mail.' }
+    console.error('Login error:', error)
+    return { error: 'Ungültige Anmeldedaten. Bitte überprüfe E-Mail und Passwort.' }
+  }
+
+  return { success: true }
+}
+
+export async function signUpWithPassword(formData: FormData) {
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  if (!email || !password) {
+    return { error: 'E-Mail und Passwort sind erforderlich.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+  })
+
+  if (error) {
+    console.error('Registration error:', error)
+    return { error: 'Registrierung fehlgeschlagen: ' + error.message }
   }
 
   return { success: true }
@@ -31,3 +50,4 @@ export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()
 }
+

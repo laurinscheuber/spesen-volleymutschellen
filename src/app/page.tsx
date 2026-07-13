@@ -1,14 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { signInWithMagicLink } from '@/app/actions/auth'
+import { signInWithPassword, signUpWithPassword } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Loader2, Mail, Volleyball } from 'lucide-react'
+import { Card, CardHeader, CardContent } from '@/components/ui/card'
+import { Loader2, Mail, Lock, Volleyball } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [isRegister, setIsRegister] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,43 +22,76 @@ export default function LoginPage() {
     setSuccess(false)
 
     const formData = new FormData(e.currentTarget)
-    const result = await signInWithMagicLink(formData)
+    const result = isRegister
+      ? await signUpWithPassword(formData)
+      : await signInWithPassword(formData)
 
     setLoading(false)
     if (result.error) {
       setError(result.error)
     } else {
-      setSuccess(true)
+      if (isRegister) {
+        setSuccess(true)
+      } else {
+        router.refresh()
+      }
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#1B255F] px-4 py-12 text-[#E5EAF7] relative overflow-hidden">
-      <div className="absolute inset-0 bg-net-pattern -z-10" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/15 via-[#1B255F]/90 to-[#1B255F] -z-10" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/10 via-[#1B255F] to-[#1B255F] -z-10" />
       
-      <Card className="w-full max-w-md border-[#4C6EBA]/20 bg-[#22307B] text-[#E5EAF7] shadow-2xl shadow-[#1B255F]">
-        {/* top accent stripe */}
-        <div className="h-1 w-full rounded-t-xl bg-[#4C6EBA]" />
-        <CardHeader className="space-y-5 text-center pt-7">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#4C6EBA]/10 ring-1 ring-[#4C6EBA]/30">
+      <Card className="w-full max-w-md border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-2xl">
+        <CardHeader className="space-y-4 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#4C6EBA]/10 text-[#4C6EBA] ring-1 ring-[#4C6EBA]/20">
             <Volleyball className="h-8 w-8 text-[#4C6EBA] animate-[spin_6s_linear_infinite]" />
           </div>
           <div className="space-y-1">
-            <h1 className="font-black text-[31px] uppercase tracking-widest text-[#E5EAF7] leading-tight">Volley Mutschellen</h1>
-            <p className="font-semibold text-[13px] text-[#C0C0C0] uppercase tracking-[0.2em]">Spesenabrechnung & Belege</p>
+            <h1 className="font-black text-[31px] uppercase tracking-wider text-[#E5EAF7] leading-tight">Volley Mutschellen</h1>
+            <p className="font-bold text-[20px] text-[#E5EAF7]">Spesenabrechnung & Belege</p>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {success ? (
-            <div className="rounded-lg bg-emerald-500/10 p-4 text-[13px] text-emerald-400 border border-emerald-500/20 space-y-2">
-              <p className="font-semibold text-center">Magic Link gesendet!</p>
-              <p className="text-[13px] text-[#E5EAF7] text-center">
-                Wir haben dir einen Anmeldelink geschickt. Bitte überprüfe dein E-Mail-Postfach (und eventuell den Spam-Ordner).
+            <div className="rounded-lg bg-emerald-500/10 p-4 text-[13px] text-emerald-400 border border-emerald-500/20 space-y-3">
+              <p className="font-semibold text-center">Registrierung erfolgreich!</p>
+              <p className="text-[13px] text-[#E5EAF7]/90 text-center">
+                Dein Account wurde erstellt. Falls du die E-Mail-Bestätigung in Supabase aktiviert hast, bestätige bitte deinen Link. 
               </p>
+              <p className="text-[13px] text-[#E5EAF7]/90 text-center">
+                Falls "Auto-Confirm" aktiv ist (oder du den User im Supabase Studio bestätigt hast), kannst du dich direkt einloggen.
+              </p>
+              <Button
+                variant="outline"
+                className="w-full border-[#4B4B4B] text-white hover:bg-[#1B255F]"
+                onClick={() => {
+                  setSuccess(false)
+                  setIsRegister(false)
+                }}
+              >
+                Zum Login wechseln
+              </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex border-b border-[#4B4B4B] mb-2">
+                <button
+                  type="button"
+                  onClick={() => { setError(null); setIsRegister(false); }}
+                  className={`flex-1 pb-2 text-sm font-semibold transition-colors ${!isRegister ? 'border-b-2 border-[#4C6EBA] text-white' : 'text-[#C0C0C0] hover:text-white'}`}
+                >
+                  Einloggen
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setError(null); setIsRegister(true); }}
+                  className={`flex-1 pb-2 text-sm font-semibold transition-colors ${isRegister ? 'border-b-2 border-[#4C6EBA] text-white' : 'text-[#C0C0C0] hover:text-white'}`}
+                >
+                  Registrieren
+                </button>
+              </div>
+
               <div className="space-y-2">
                 <label htmlFor="email" className="text-[13px] font-semibold text-[#E5EAF7]">
                   E-Mail-Adresse
@@ -63,13 +99,31 @@ export default function LoginPage() {
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-[#C0C0C0]" />
                   <Input
-                     id="email"
-                     name="email"
-                     type="email"
-                     placeholder="name@domain.ch"
-                     required
-                     disabled={loading}
-                     className="pl-10 border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0] focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="name@domain.ch"
+                    required
+                    disabled={loading}
+                    className="pl-10 border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0] focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-[13px] font-semibold text-[#E5EAF7]">
+                  Passwort
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-[#C0C0C0]" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                    disabled={loading}
+                    className="pl-10 border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0] focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
                   />
                 </div>
               </div>
@@ -88,17 +142,17 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sende Link...
+                    Bitte warten...
                   </>
                 ) : (
-                  'Einloggen mit Magic Link'
+                  isRegister ? 'Registrieren' : 'Einloggen'
                 )}
               </Button>
             </form>
           )}
 
           <div className="text-center text-[13px] font-normal text-[#E5EAF7]/80">
-            Passwortloser Login. Nach dem Klick erhältst du einen sicheren Link per E-Mail.
+            Sicheres Passwort-Login für Volley Mutschellen Mitglieder.
           </div>
         </CardContent>
       </Card>

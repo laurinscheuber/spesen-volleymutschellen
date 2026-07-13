@@ -9,14 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ChevronLeft, Calendar, FileText, CheckCircle, XCircle, Info } from 'lucide-react'
 
 export default async function UserReportDetailPage(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+  const params = await props.params
   const supabase = await createClient()
 
-  // Get current user profile
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/')
-  }
+  if (!user) redirect('/')
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -24,7 +21,6 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
     .eq('id', user.id)
     .single()
 
-  // Fetch report details
   const { data: report, error } = await supabase
     .from('expense_reports')
     .select(`
@@ -48,14 +44,9 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
     .eq('id', params.id)
     .single()
 
-  if (error || !report) {
-    redirect('/dashboard')
-  }
+  if (error || !report) redirect('/dashboard')
 
-  // Ensure owner is viewing (unless they are admin, but admins use /admin)
-  if (report.user_id !== user.id && profile?.role !== 'admin') {
-    redirect('/dashboard')
-  }
+  if (report.user_id !== user.id && profile?.role !== 'admin') redirect('/dashboard')
 
   const items = (report.expense_items as any[]) || []
   const totalAmount = items.reduce((sum, item) => sum + Number(item.amount), 0).toFixed(2)
@@ -64,23 +55,23 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
     switch (status) {
       case 'ausbezahlt':
         return (
-          <div className="flex items-center gap-1 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md text-xs font-semibold">
+          <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-[11px] font-bold">
             <CheckCircle className="h-4 w-4" />
-            <span>Ausbezahlt</span>
+            Ausbezahlt
           </div>
         )
       case 'abgelehnt':
         return (
-          <div className="flex items-center gap-1 text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-md text-xs font-semibold">
+          <div className="flex items-center gap-1.5 text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] font-bold">
             <XCircle className="h-4 w-4" />
-            <span>Abgelehnt</span>
+            Abgelehnt
           </div>
         )
       default:
         return (
-          <div className="flex items-center gap-1 text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md text-xs font-semibold">
+          <div className="flex items-center gap-1.5 text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg text-[11px] font-bold">
             <Info className="h-4 w-4" />
-            <span>Offen (Warte auf Freigabe)</span>
+            Offen – Warte auf Freigabe
           </div>
         )
     }
@@ -89,46 +80,43 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
   return (
     <AppLayout profile={profile || { full_name: 'Nutzer', email: '', role: 'user' }}>
       <div className="space-y-6 max-w-4xl mx-auto w-full">
-        {/* Back Button */}
-        <div>
-          <Link href="/dashboard">
-            <Button variant="ghost" className="text-slate-400 hover:text-white pl-0 gap-1">
-              <ChevronLeft className="h-4 w-4" />
-              Zurück zur Übersicht
-            </Button>
-          </Link>
-        </div>
+        {/* Back */}
+        <Link href="/dashboard">
+          <Button variant="ghost" className="text-[#C0C0C0] hover:text-white hover:bg-[#22307B]/50 pl-0 gap-1">
+            <ChevronLeft className="h-4 w-4" />
+            Zurück zur Übersicht
+          </Button>
+        </Link>
 
-        {/* Report Overview Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-900 pb-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#4B4B4B]/50 pb-4">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <FileText className="h-6 w-6 text-blue-500" />
+            <h1 className="text-2xl font-black uppercase tracking-wider text-[#E5EAF7] flex items-center gap-2">
+              <FileText className="h-6 w-6 text-[#4C6EBA]" />
               Spesenbericht Details
             </h1>
-            <p className="text-xs text-slate-500 font-mono">ID: {report.id}</p>
+            <p className="text-[11px] text-[#C0C0C0] font-mono">ID: {report.id}</p>
           </div>
           <div>{getStatusBadge(report.status)}</div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Metadata Card */}
-          <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl text-slate-100 shadow-md md:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Abrechnungs-Info</CardTitle>
+          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md md:col-span-1">
+            <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
+              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Abrechnungs-Info</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm">
+            <CardContent className="pt-4 space-y-4">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-500" />
+                <div className="p-1.5 bg-[#4C6EBA]/10 rounded-md border border-[#4C6EBA]/20">
+                  <Calendar className="h-3.5 w-3.5 text-[#4C6EBA]" />
+                </div>
                 <div>
-                  <p className="text-xs text-slate-500">Eingereicht am</p>
-                  <p className="text-slate-200 font-mono">
+                  <p className="text-[10px] text-[#C0C0C0]">Eingereicht am</p>
+                  <p className="text-[#E5EAF7] font-mono text-[13px]">
                     {new Date(report.created_at).toLocaleDateString('de-CH', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
+                      day: '2-digit', month: '2-digit', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
                     })}
                   </p>
                 </div>
@@ -136,72 +124,70 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
 
               {report.paid_at && (
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-emerald-500" />
+                  <div className="p-1.5 bg-emerald-500/10 rounded-md border border-emerald-500/20">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                  </div>
                   <div>
-                    <p className="text-xs text-slate-500">Ausbezahlt am</p>
-                    <p className="text-slate-200 font-mono">
+                    <p className="text-[10px] text-[#C0C0C0]">Ausbezahlt am</p>
+                    <p className="text-[#E5EAF7] font-mono text-[13px]">
                       {new Date(report.paid_at).toLocaleDateString('de-CH', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
+                        day: '2-digit', month: '2-digit', year: 'numeric',
                       })}
                     </p>
                   </div>
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-850">
-                <p className="text-xs text-slate-500">Gesamtbetrag</p>
-                <p className="text-xl font-mono text-white font-bold">CHF {totalAmount}</p>
+              <div className="pt-3 border-t border-[#4B4B4B]/50">
+                <p className="text-[10px] text-[#C0C0C0] uppercase tracking-wider mb-1">Gesamtbetrag</p>
+                <p className="text-2xl font-bold text-white font-mono">CHF {totalAmount}</p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Items / Admin Notes Card */}
+          {/* Items & Notes */}
           <div className="md:col-span-2 space-y-6">
-            {/* Rejection comment */}
             {report.status === 'abgelehnt' && (
-              <Card className="border-rose-500/20 bg-rose-500/5 text-slate-200 shadow-sm">
+              <Card className="border-rose-500/20 bg-rose-500/5 text-[#E5EAF7] shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold text-rose-400 flex items-center gap-1.5">
+                  <CardTitle className="text-[13px] font-bold text-rose-400 flex items-center gap-1.5">
                     <XCircle className="h-4 w-4" />
                     Begründung für die Ablehnung
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm whitespace-pre-wrap italic">
+                  <p className="text-[13px] whitespace-pre-wrap italic text-[#E5EAF7]/80">
                     {report.admin_notes || 'Keine Begründung angegeben.'}
                   </p>
                 </CardContent>
               </Card>
             )}
 
-            {/* List of items */}
-            <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl text-slate-100 shadow-md">
-              <CardHeader>
-                <CardTitle className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Abrechnungsposten</CardTitle>
+            <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
+              <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
+                <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Abrechnungsposten</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader className="border-slate-850">
-                      <TableRow className="hover:bg-transparent border-slate-850">
-                        <TableHead className="text-slate-450 font-medium">Datum</TableHead>
-                        <TableHead className="text-slate-450 font-medium">Kategorie</TableHead>
-                        <TableHead className="text-slate-450 font-medium">Zweck</TableHead>
-                        <TableHead className="text-right text-slate-450 font-medium">Betrag</TableHead>
-                        <TableHead className="w-28"></TableHead>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
+                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
+                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
+                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
+                        <TableHead className="text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
+                        <TableHead className="w-28" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => (
-                        <TableRow key={item.id} className="border-slate-850 hover:bg-slate-900/10">
-                          <TableCell className="text-slate-300 font-mono text-xs">
+                        <TableRow key={item.id} className="border-[#4B4B4B]/30 hover:bg-[#1B255F]/30 transition-colors">
+                          <TableCell className="text-[#E5EAF7]/80 font-mono text-xs">
                             {new Date(item.date).toLocaleDateString('de-CH')}
                           </TableCell>
-                          <TableCell className="text-slate-300 text-xs">{item.categories?.name}</TableCell>
-                          <TableCell className="text-slate-350 text-xs whitespace-pre-wrap">{item.purpose}</TableCell>
-                          <TableCell className="text-right text-white font-mono text-xs">
+                          <TableCell className="text-[#E5EAF7]/80 text-xs">{item.categories?.name}</TableCell>
+                          <TableCell className="text-[#C0C0C0] text-xs whitespace-pre-wrap">{item.purpose}</TableCell>
+                          <TableCell className="text-right text-white font-mono text-xs font-semibold">
                             CHF {Number(item.amount).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right">

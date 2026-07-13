@@ -52,8 +52,8 @@ export default async function AdminPage() {
     <AppLayout profile={profile || { full_name: 'Kassier', email: '', role: 'admin' }}>
       <div className="space-y-6 max-w-5xl mx-auto w-full">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Kassier-Dashboard</h1>
-          <p className="text-sm text-slate-400">Übersicht aller ausstehenden Spesenberichte und Webling-Export.</p>
+          <h1 className="text-[27px] font-bold text-[#E5EAF7] tracking-tight">Kassier-Dashboard</h1>
+          <p className="text-[13px] text-[#C0C0C0]">Übersicht aller ausstehenden Spesenberichte und Webling-Export.</p>
         </div>
 
         <AdminDashboard reports={formattedReports} />

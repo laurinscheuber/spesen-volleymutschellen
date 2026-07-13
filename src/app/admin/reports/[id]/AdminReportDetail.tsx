@@ -50,12 +50,10 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
     if (!confirm('Diesen Spesenbericht als ausbezahlt markieren? Der Nutzer erhält eine E-Mail-Benachrichtigung.')) {
       return
     }
-
     setSubmitting('payout')
     setError(null)
     const result = await updateReportStatus(report.id, 'ausbezahlt')
     setSubmitting(null)
-
     if (result.error) {
       setError(result.error)
     } else {
@@ -69,7 +67,6 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
     setError(null)
     const result = await updateReportStatus(report.id, 'abgelehnt', adminNotes)
     setSubmitting(null)
-
     if (result.error) {
       setError(result.error)
     } else {
@@ -86,20 +83,20 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       {/* Back button */}
       <div>
         <Link href="/admin">
-          <Button variant="ghost" className="text-slate-400 hover:text-white pl-0 gap-1 h-9 rounded-lg">
+          <Button variant="ghost" className="text-[#C0C0C0] hover:text-white hover:bg-[#22307B]/50 pl-0 gap-1 h-9 rounded-lg">
             <ChevronLeft className="h-4 w-4" />
             Zurück zu offenen Spesen
           </Button>
         </Link>
       </div>
 
-      {/* Header Info */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-900 pb-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#4B4B4B]/50 pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Spesenabrechnung prüfen</h1>
-          <p className="text-xs text-slate-500 font-mono mt-1">Bericht ID: {report.id}</p>
+          <h1 className="text-2xl font-black uppercase tracking-wider text-[#E5EAF7]">Spesenabrechnung prüfen</h1>
+          <p className="text-[11px] text-[#C0C0C0] font-mono mt-1">Bericht ID: {report.id}</p>
         </div>
-        
+
         {report.status === 'offen' && (
           <div className="flex gap-3">
             <Button
@@ -127,51 +124,55 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       </div>
 
       {error && (
-        <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive-foreground border border-destructive/20">
+        <div className="rounded-lg bg-destructive/10 p-4 text-[13px] text-destructive-foreground border border-destructive/20">
           {error}
         </div>
       )}
 
-      {/* Main Grid: Details + Receipt Preview */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left column: User details + Items (lg:col-span-7) */}
+        {/* Left column */}
         <div className="lg:col-span-7 space-y-6">
           {/* Member Card */}
-          <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl text-slate-100 shadow-md">
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold text-slate-450 uppercase tracking-wider">Mitglied & Auszahlung</CardTitle>
+          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
+            <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
+              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Mitglied & Auszahlung</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+            <CardContent className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-slate-500" />
+                  <div className="p-1.5 bg-[#4C6EBA]/10 rounded-md border border-[#4C6EBA]/20">
+                    <User className="h-3.5 w-3.5 text-[#4C6EBA]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-slate-500">Name</p>
-                    <p className="text-white font-medium">{report.user_name}</p>
-                    <p className="text-xs text-slate-400">{report.user_email}</p>
+                    <p className="text-[10px] text-[#C0C0C0]">Name</p>
+                    <p className="text-[#E5EAF7] font-semibold text-[13px]">{report.user_name}</p>
+                    <p className="text-[11px] text-[#C0C0C0]">{report.user_email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-slate-500" />
+                  <div className="p-1.5 bg-[#4C6EBA]/10 rounded-md border border-[#4C6EBA]/20">
+                    <Calendar className="h-3.5 w-3.5 text-[#4C6EBA]" />
+                  </div>
                   <div>
-                    <p className="text-xs text-slate-500">Eingereicht am</p>
-                    <p className="text-slate-300 font-mono">
+                    <p className="text-[10px] text-[#C0C0C0]">Eingereicht am</p>
+                    <p className="text-[#E5EAF7] font-mono text-[13px]">
                       {new Date(report.created_at).toLocaleDateString('de-CH')}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3 bg-slate-950/40 border border-slate-850 p-4 rounded-lg flex flex-col justify-between">
+              <div className="space-y-3 bg-[#1B255F]/50 border border-[#4B4B4B] p-4 rounded-xl flex flex-col justify-between">
                 <div>
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Auszahlungs-IBAN</span>
-                  <span className="font-mono text-xs text-white block mt-1 break-all">{report.iban}</span>
+                  <span className="text-[10px] font-bold text-[#C0C0C0] uppercase tracking-wider block">Auszahlungs-IBAN</span>
+                  <span className="font-mono text-xs text-[#E5EAF7] block mt-1 break-all">{report.iban}</span>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyIban}
-                  className="mt-2 text-xs border-slate-800 hover:bg-slate-900 text-slate-300 gap-1.5 h-8 w-full rounded-md"
+                  className="mt-2 text-xs border-[#4B4B4B] hover:bg-[#22307B] text-[#E5EAF7]/80 hover:text-white gap-1.5 h-8 w-full rounded-md"
                 >
                   {copied ? (
                     <>
@@ -190,24 +191,24 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
           </Card>
 
           {/* Items Card */}
-          <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl text-slate-100 shadow-md">
-            <CardHeader className="flex flex-row justify-between items-center pb-3">
-              <CardTitle className="text-sm font-semibold text-slate-450 uppercase tracking-wider">Auszahlungsposten</CardTitle>
+          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
+            <CardHeader className="border-b border-[#4B4B4B]/50 pb-4 flex flex-row justify-between items-center">
+              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Auszahlungsposten</CardTitle>
               <div className="text-right">
-                <span className="text-[10px] text-slate-500 uppercase block">Gesamtsumme</span>
+                <span className="text-[10px] text-[#C0C0C0] uppercase block">Gesamtsumme</span>
                 <span className="font-mono text-base font-bold text-white">CHF {report.total.toFixed(2)}</span>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader className="border-slate-850">
-                    <TableRow className="hover:bg-transparent border-slate-850">
-                      <TableHead className="text-slate-400 font-medium">Datum</TableHead>
-                      <TableHead className="text-slate-400 font-medium">Kategorie</TableHead>
-                      <TableHead className="text-slate-400 font-medium">Zweck</TableHead>
-                      <TableHead className="text-right text-slate-400 font-medium">Betrag</TableHead>
-                      <TableHead className="w-16"></TableHead>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
+                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
+                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
+                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
+                      <TableHead className="text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
+                      <TableHead className="w-16" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -215,15 +216,15 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
                       <TableRow
                         key={item.id}
                         onClick={() => setSelectedReceipt(item.receipt_url)}
-                        className={`border-slate-850 cursor-pointer transition-colors hover:bg-slate-900/20 ${
-                          selectedReceipt === item.receipt_url ? 'bg-slate-900/30' : ''
+                        className={`border-[#4B4B4B]/30 cursor-pointer transition-colors hover:bg-[#1B255F]/30 ${
+                          selectedReceipt === item.receipt_url ? 'bg-[#4C6EBA]/10 border-l-2 border-l-[#4C6EBA]' : ''
                         }`}
                       >
-                        <TableCell className="text-slate-300 font-mono text-xs">
+                        <TableCell className="text-[#E5EAF7]/80 font-mono text-xs">
                           {new Date(item.date).toLocaleDateString('de-CH')}
                         </TableCell>
-                        <TableCell className="text-slate-300 text-xs font-medium">{item.category_name}</TableCell>
-                        <TableCell className="text-slate-350 text-xs truncate max-w-[160px]" title={item.purpose}>
+                        <TableCell className="text-[#E5EAF7]/80 text-xs font-medium">{item.category_name}</TableCell>
+                        <TableCell className="text-[#C0C0C0] text-xs truncate max-w-[160px]" title={item.purpose}>
                           {item.purpose}
                         </TableCell>
                         <TableCell className="text-right text-white font-mono text-xs font-semibold">
@@ -233,7 +234,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-slate-500 group-hover:text-white"
+                            className="h-6 w-6 text-[#C0C0C0] hover:text-white"
                             title="Vorschau wechseln"
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -248,27 +249,27 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
           </Card>
         </div>
 
-        {/* Right column: Interactive Receipt Preview (lg:col-span-5) */}
+        {/* Right column: Receipt Preview */}
         <div className="lg:col-span-5 space-y-4">
-          <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl text-slate-100 shadow-md">
-            <CardHeader className="pb-3 border-b border-slate-850">
-              <CardTitle className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
+            <CardHeader className="pb-3 border-b border-[#4B4B4B]/50">
+              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider flex items-center justify-between">
                 <span>Beleg-Vorschau</span>
                 {selectedReceipt && (
                   <a
                     href={selectedReceipt}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 normal-case font-normal"
+                    className="text-xs text-[#4C6EBA] hover:text-[#E5EAF7] flex items-center gap-1 normal-case font-normal transition-colors"
                   >
                     Vollbild
                   </a>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4">
               {selectedReceipt ? (
-                <div className="rounded-lg overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center min-h-[350px] max-h-[500px]">
+                <div className="rounded-lg overflow-hidden border border-[#4B4B4B] bg-[#1B255F]/60 flex items-center justify-center min-h-[350px] max-h-[500px]">
                   {isPdf ? (
                     <iframe
                       src={selectedReceipt}
@@ -285,8 +286,8 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                  <Info className="h-8 w-8 text-slate-700 mb-2" />
+                <div className="flex flex-col items-center justify-center py-20 text-[#C0C0C0]/60">
+                  <Info className="h-8 w-8 text-[#4B4B4B] mb-2" />
                   <p className="text-xs">Kein Beleg ausgewählt.</p>
                 </div>
               )}
@@ -295,28 +296,28 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
         </div>
       </div>
 
-      {/* Reject Reason Dialog Modal */}
+      {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className="border-slate-850 bg-slate-900 text-slate-100 rounded-xl shadow-2xl p-6">
+        <DialogContent className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] rounded-xl shadow-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-1.5">
+            <DialogTitle className="text-[17px] font-bold text-[#E5EAF7] flex items-center gap-1.5">
               <XCircle className="h-5 w-5 text-rose-500" />
               Spesenbericht ablehnen
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-xs text-slate-400">
+            <p className="text-[13px] text-[#C0C0C0]">
               Bitte gib eine Begründung für die Ablehnung an. Der Nutzer erhält diese Begründung per E-Mail.
             </p>
-            <div className="space-y-1">
-              <label htmlFor="notes" className="text-[10px] font-bold text-slate-500 uppercase">Begründung</label>
+            <div className="space-y-1.5">
+              <label htmlFor="notes" className="text-[10px] font-bold text-[#C0C0C0] uppercase tracking-wider">Begründung</label>
               <Textarea
                 id="notes"
                 placeholder="z.B. Beleg fehlt oder ist nicht lesbar..."
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows={4}
-                className="border-slate-800 bg-slate-950/50 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-550"
+                className="border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0]/50 focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
               />
             </div>
           </div>
@@ -324,7 +325,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
             <Button
               variant="outline"
               onClick={() => setRejectDialogOpen(false)}
-              className="border-slate-800 hover:bg-slate-950 text-slate-400 hover:text-white"
+              className="border-[#4B4B4B] hover:bg-[#1B255F] text-[#C0C0C0] hover:text-white"
             >
               Abbrechen
             </Button>

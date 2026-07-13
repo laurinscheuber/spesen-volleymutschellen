@@ -24,8 +24,8 @@ export default async function NewExpensePage() {
     <AppLayout profile={profile || { full_name: 'Nutzer', email: '', role: 'user' }}>
       <div className="space-y-6 max-w-5xl mx-auto w-full">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Spesen einreichen</h1>
-          <p className="text-sm text-slate-400">Erstelle eine neue Sammelabrechnung und füge deine Belege hinzu.</p>
+          <h1 className="text-[27px] font-bold text-[#E5EAF7] tracking-tight">Spesen einreichen</h1>
+          <p className="text-[13px] text-[#C0C0C0]">Erstelle eine neue Sammelabrechnung und füge deine Belege hinzu.</p>
         </div>
 
         <ExpenseCart initialCategories={categories || []} />

@@ -54,31 +54,31 @@ export default function CategoryList({ categories }: { categories: Category[] })
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-      {/* Left panel: Add category */}
+      {/* Left: Add category */}
       <div className="md:col-span-4 space-y-6">
-        <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl text-slate-100 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold text-slate-450 uppercase tracking-wider flex items-center gap-1.5">
-              <Plus className="h-4 w-4 text-blue-500" />
+        <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
+          <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
+            <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider flex items-center gap-1.5">
+              <Plus className="h-4 w-4 text-[#4C6EBA]" />
               Kategorie erstellen
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             <form onSubmit={handleCreate} className="space-y-4">
-              <div className="space-y-1">
-                <label htmlFor="name" className="text-[10px] font-bold text-slate-500 uppercase">Bezeichnung</label>
+              <div className="space-y-1.5">
+                <label htmlFor="name" className="text-[10px] font-bold text-[#C0C0C0] uppercase tracking-wider">Bezeichnung</label>
                 <Input
                   id="name"
                   placeholder="z.B. Trainerhonorar"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={loading}
-                  className="border-slate-800 bg-slate-950/50 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0]/50 focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
                 />
               </div>
 
               {error && (
-                <div className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive-foreground border border-destructive/20 flex items-center gap-1.5">
+                <div className="rounded-lg bg-destructive/10 p-3 text-[13px] text-destructive-foreground border border-destructive/20 flex items-center gap-1.5">
                   <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -87,7 +87,7 @@ export default function CategoryList({ categories }: { categories: Category[] })
               <Button
                 type="submit"
                 disabled={loading || !name.trim()}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs h-9 transition-colors"
+                className="w-full bg-[#4C6EBA] hover:bg-[#4C6EBA]/90 text-white font-semibold text-xs h-9 transition-colors"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Kategorie anlegen'}
               </Button>
@@ -96,35 +96,35 @@ export default function CategoryList({ categories }: { categories: Category[] })
         </Card>
       </div>
 
-      {/* Right panel: Table */}
+      {/* Right: Table */}
       <div className="md:col-span-8">
-        <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl text-slate-100 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold text-slate-450 uppercase tracking-wider">
+        <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-lg">
+          <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
+            <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">
               Bestehende Kategorien ({categories.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="border-slate-850">
-                  <TableRow className="hover:bg-transparent border-slate-850">
-                    <TableHead className="text-slate-400 font-medium">Name</TableHead>
-                    <TableHead className="text-slate-400 font-medium">Status</TableHead>
-                    <TableHead className="w-32 text-right text-slate-400 font-medium">Aktionen</TableHead>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
+                    <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Name</TableHead>
+                    <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Status</TableHead>
+                    <TableHead className="w-32 text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {categories.map((category) => (
-                    <TableRow key={category.id} className="border-slate-850 hover:bg-slate-900/10">
-                      <TableCell className="text-slate-205 font-medium text-xs">
+                    <TableRow key={category.id} className="border-[#4B4B4B]/30 hover:bg-[#1B255F]/30 transition-colors">
+                      <TableCell className="text-[#E5EAF7] font-medium text-[13px]">
                         {category.name}
                       </TableCell>
                       <TableCell>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
                           category.is_active
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-slate-500/10 text-slate-400 border-slate-800'
+                            : 'bg-[#4B4B4B]/20 text-[#C0C0C0] border-[#4B4B4B]'
                         }`}>
                           {category.is_active ? 'Aktiv' : 'Inaktiv'}
                         </span>
@@ -137,7 +137,7 @@ export default function CategoryList({ categories }: { categories: Category[] })
                           onClick={() => handleToggle(category.id, category.is_active)}
                           className={`h-7 px-2 text-xs rounded-md gap-1 ${
                             category.is_active
-                              ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
+                              ? 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
                               : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
                           }`}
                         >

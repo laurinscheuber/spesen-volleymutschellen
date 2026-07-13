@@ -32,7 +32,8 @@ export default function ProfileOnboardingPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#1B255F] px-4 py-12 text-[#E5EAF7] relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/10 via-[#1B255F] to-[#1B255F] -z-10" />
+      <div className="absolute inset-0 bg-net-pattern -z-10" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/15 via-[#1B255F]/90 to-[#1B255F] -z-10" />
 
       <Card className="w-full max-w-md border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-2xl">
         <CardHeader className="space-y-4 text-center">

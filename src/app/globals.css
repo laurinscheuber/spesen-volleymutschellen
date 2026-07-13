@@ -38,6 +38,8 @@
 }
 
 :root {
+  color-scheme: dark;
+
   --background: #1B255F;
   --foreground: #E5EAF7;
   --card: #22307B;
@@ -102,10 +104,58 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
+
+  /* Custom scrollbar — matches the dark navy theme */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1B255F;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #4B4B4B;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4C6EBA;
+  }
+
+  /* Date/time input icon colour fix for dark mode */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+  }
+}
+
+/* Subtle diamond/net pattern used on full-page auth screens */
+.bg-net-pattern {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(76, 110, 186, 0.04) 0px,
+      rgba(76, 110, 186, 0.04) 1px,
+      transparent 1px,
+      transparent 28px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(76, 110, 186, 0.04) 0px,
+      rgba(76, 110, 186, 0.04) 1px,
+      transparent 1px,
+      transparent 28px
+    );
 }

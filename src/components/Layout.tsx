@@ -39,7 +39,8 @@ export default function AppLayout({ children, profile }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#1B255F] text-[#E5EAF7] flex flex-col relative">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/8 via-[#1B255F] to-[#1B255F] -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-net-pattern -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/8 via-[#1B255F]/95 to-[#1B255F] -z-10 pointer-events-none" />
 
       {/* Header */}
       <header className="border-b border-[#4B4B4B]/60 bg-[#1B255F]/80 backdrop-blur-md sticky top-0 z-50">

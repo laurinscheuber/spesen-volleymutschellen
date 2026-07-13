@@ -11,7 +11,24 @@ import { Loader2, User, CreditCard, Volleyball } from 'lucide-react'
 export default function ProfileOnboardingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [iban, setIban] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  const formatIBAN = (value: string) => {
+    const raw = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+    const parts = []
+    for (let i = 0; i < raw.length; i += 4) {
+      parts.push(raw.substring(i, i + 4))
+    }
+    return parts.join(' ')
+  }
+
+  const handleIbanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatIBAN(e.target.value)
+    if (formatted.replace(/\s/g, '').length <= 21) {
+      setIban(formatted)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -19,6 +36,10 @@ export default function ProfileOnboardingPage() {
     setError(null)
 
     const formData = new FormData(e.currentTarget)
+    // Clean spaces from IBAN before updating profile
+    const rawIban = iban.replace(/\s/g, '')
+    formData.set('iban', rawIban)
+
     const result = await updateProfile(formData)
 
     if (result.error) {
@@ -41,9 +62,9 @@ export default function ProfileOnboardingPage() {
             <Volleyball className="h-8 w-8 text-[#4C6EBA] animate-[spin_6s_linear_infinite]" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-2xl font-black uppercase tracking-wider text-[#E5EAF7]">
+            <h1 className="font-black text-[31px] uppercase tracking-wider text-[#E5EAF7] leading-tight">
               Stammdaten hinterlegen
-            </CardTitle>
+            </h1>
             <CardDescription className="text-[13px] text-[#C0C0C0]">
               Bevor du Spesen einreichen kannst, benötigen wir deinen Namen und deine IBAN für die Auszahlung.
             </CardDescription>
@@ -56,7 +77,7 @@ export default function ProfileOnboardingPage() {
                 Vollständiger Name (Vorname & Nachname)
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-[#C0C0C0]" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C0C0C0]" />
                 <Input
                   id="fullName"
                   name="fullName"
@@ -73,10 +94,12 @@ export default function ProfileOnboardingPage() {
                 IBAN für Auszahlung (Schweizer Bankkonto)
               </label>
               <div className="relative">
-                <CreditCard className="absolute left-3 top-3 h-4 w-4 text-[#C0C0C0]" />
+                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C0C0C0]" />
                 <Input
                   id="iban"
                   name="iban"
+                  value={iban}
+                  onChange={handleIbanChange}
                   placeholder="CH93 0000 0000 0000 0000 0"
                   required
                   disabled={loading}

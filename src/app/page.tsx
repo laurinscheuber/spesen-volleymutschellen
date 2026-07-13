@@ -97,7 +97,7 @@ export default function LoginPage() {
                   E-Mail-Adresse
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-[#C0C0C0]" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C0C0C0]" />
                   <Input
                     id="email"
                     name="email"
@@ -116,7 +116,7 @@ export default function LoginPage() {
                   Passwort
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-[#C0C0C0]" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C0C0C0]" />
                   <Input
                     id="password"
                     name="password"

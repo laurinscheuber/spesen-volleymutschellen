@@ -38,7 +38,19 @@ export default function AppLayout({ children, profile }: LayoutProps) {
         { href: '/admin/members', label: 'Mitglieder & IBANs', icon: Users },
         { href: '/admin/categories', label: 'Kategorien', icon: Tags },
       ]
-    : [] // No links in header for regular users
+    : [] // No links in desktop header for regular users
+
+  const mobileLinks = isAdmin
+    ? [
+        { href: '/dashboard', label: 'Meine Spesen', icon: FileText },
+        { href: '/admin', label: 'Spesenübersicht', icon: ClipboardList },
+        { href: '/admin/stats', label: 'Statistiken', icon: BarChart3 },
+        { href: '/admin/members', label: 'Mitglieder & IBANs', icon: Users },
+        { href: '/admin/categories', label: 'Kategorien', icon: Tags },
+      ]
+    : [
+        { href: '/dashboard', label: 'Meine Spesen', icon: FileText },
+      ]
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col relative">
@@ -98,7 +110,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
             </Link>
 
             {isAdmin && (
-              <Link href="/admin/archive">
+              <Link href="/admin/archive" className="hidden lg:block">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -113,7 +125,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
               </Link>
             )}
 
-            <Link href="/profile">
+            <Link href="/profile" className="hidden lg:block">
               <Button
                 variant="ghost"
                 size="icon"
@@ -128,13 +140,13 @@ export default function AppLayout({ children, profile }: LayoutProps) {
               variant="ghost"
               size="icon"
               onClick={handleSignOut}
-              className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 h-9 w-9 rounded-lg"
+              className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 h-9 w-9 rounded-lg hidden lg:block"
               title="Abmelden"
             >
               <LogOut className="h-4 w-4" />
             </Button>
 
-            {links.length > 0 && (
+            {mobileLinks.length > 0 && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -150,9 +162,9 @@ export default function AppLayout({ children, profile }: LayoutProps) {
       </header>
 
       {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && links.length > 0 && (
+      {mobileMenuOpen && mobileLinks.length > 0 && (
         <div className="lg:hidden border-b border-slate-200 bg-white shadow-inner py-3 px-4 space-y-1 sticky top-20 z-40">
-          {links.map((link) => {
+          {mobileLinks.map((link) => {
             const Icon = link.icon
             const isActive =
               pathname === link.href ||
@@ -176,6 +188,50 @@ export default function AppLayout({ children, profile }: LayoutProps) {
               </Link>
             )
           })}
+
+          {/* Add Search, Profile/Settings and Logout to the mobile menu list! */}
+          <div className="border-t border-slate-100 pt-2 mt-2 space-y-1">
+            {isAdmin && (
+              <Link
+                href="/admin/archive"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center space-x-2.5 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors",
+                  pathname.startsWith('/admin/archive')
+                    ? "bg-slate-100 text-[#1B255F] border border-slate-200/50"
+                    : "text-slate-600 hover:text-[#1B255F] hover:bg-slate-50"
+                )}
+              >
+                <Search className={cn("h-4 w-4", pathname.startsWith('/admin/archive') ? "text-[#1B255F]" : "text-slate-400")} />
+                <span>Spesenarchiv & Suche</span>
+              </Link>
+            )}
+
+            <Link
+              href="/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "flex items-center space-x-2.5 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors",
+                pathname === '/profile'
+                  ? "bg-slate-100 text-[#1B255F] border border-slate-200/50"
+                  : "text-slate-600 hover:text-[#1B255F] hover:bg-slate-50"
+              )}
+            >
+              <Settings className={cn("h-4 w-4", pathname === '/profile' ? "text-[#1B255F]" : "text-slate-400")} />
+              <span>Profil & IBAN bearbeiten</span>
+            </Link>
+
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleSignOut()
+              }}
+              className="w-full flex items-center space-x-2.5 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors text-rose-600 hover:bg-rose-50"
+            >
+              <LogOut className="h-4 w-4 text-rose-500" />
+              <span>Abmelden</span>
+            </button>
+          </div>
         </div>
       )}
 

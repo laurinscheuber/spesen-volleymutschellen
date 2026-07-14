@@ -50,9 +50,8 @@ export default function LoginPage() {
               className="h-20 w-auto logo-blue object-contain" 
             />
           </div>
-          <div className="space-y-1">
-            <h1 className="font-black text-[27px] uppercase tracking-wider text-[#1B255F] leading-tight">Volley Mutschellen</h1>
-            <p className="font-bold text-[18px] text-slate-500">Spesenabrechnung & Belege</p>
+          <div className="pt-2">
+            <p className="font-black uppercase tracking-widest text-[14px] text-[#1B255F]">Spesenabrechnung & Belege</p>
           </div>
         </CardHeader>
         <CardContent className="space-y-6 pb-8">

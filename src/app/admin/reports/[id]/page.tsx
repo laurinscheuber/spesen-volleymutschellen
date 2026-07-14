@@ -3,8 +3,12 @@ import { redirect } from 'next/navigation'
 import AdminReportDetail from './AdminReportDetail'
 import AppLayout from '@/components/Layout'
 
-export default async function AdminReportPage(props: { params: Promise<{ id: string }> }) {
+export default async function AdminReportPage(props: { 
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
   const supabase = await createClient()
 
   // Get current user profile
@@ -58,6 +62,28 @@ export default async function AdminReportPage(props: { params: Promise<{ id: str
     redirect('/admin')
   }
 
+  // Calculate review queue progress if in queue mode
+  const isQueueMode = searchParams.queue === 'true'
+  let queueIndex: number | undefined = undefined
+  let queueTotal: number | undefined = undefined
+  let nextReportId: string | null = null
+
+  if (isQueueMode) {
+    const { data: allPending } = await supabase
+      .from('expense_reports')
+      .select('id')
+      .in('status', ['offen', 'in_auftrag'])
+      .order('created_at', { ascending: true })
+
+    const pendingIds = (allPending || []).map((r) => r.id)
+    const currentIndex = pendingIds.indexOf(params.id)
+    if (currentIndex !== -1) {
+      queueIndex = currentIndex + 1
+      queueTotal = pendingIds.length
+      nextReportId = currentIndex + 1 < pendingIds.length ? pendingIds[currentIndex + 1] : null
+    }
+  }
+
   // Map database details into frontend types
   const items = ((report.expense_items as any[]) || []).map((item) => ({
     id: item.id,
@@ -75,7 +101,7 @@ export default async function AdminReportPage(props: { params: Promise<{ id: str
   const reportDetails = {
     id: report.id,
     created_at: report.created_at,
-    status: report.status as 'offen' | 'ausbezahlt' | 'abgelehnt',
+    status: report.status as 'offen' | 'in_auftrag' | 'ausbezahlt' | 'abgelehnt',
     user_name: reportOwner?.full_name || 'Unbekannt',
     user_email: reportOwner?.email || '',
     iban: reportOwner?.iban || '',
@@ -86,7 +112,12 @@ export default async function AdminReportPage(props: { params: Promise<{ id: str
   return (
     <AppLayout profile={profile}>
       <div className="max-w-6xl mx-auto w-full">
-        <AdminReportDetail report={reportDetails} />
+        <AdminReportDetail 
+          report={reportDetails}
+          queueIndex={queueIndex}
+          queueTotal={queueTotal}
+          nextReportId={nextReportId}
+        />
       </div>
     </AppLayout>
   )

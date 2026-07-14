@@ -82,8 +82,12 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 CREATE OR REPLACE FUNCTION public.handle_profile_update()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Restrict role modification
-  IF NEW.role <> OLD.role AND NOT public.is_admin() THEN
+  -- Restrict role modification unless admin, running via SQL Editor/migration (auth.uid() is null), or service_role
+  IF NEW.role <> OLD.role AND NOT (
+    public.is_admin() OR
+    auth.uid() IS NULL OR
+    current_setting('role', true) = 'service_role'
+  ) THEN
     NEW.role = OLD.role;
   END IF;
   NEW.updated_at = NOW();

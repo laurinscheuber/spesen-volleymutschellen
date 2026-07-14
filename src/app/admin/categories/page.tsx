@@ -19,11 +19,25 @@ export default async function AdminCategoriesPage() {
     redirect('/dashboard')
   }
 
-  // Fetch all categories
+  // Fetch all categories with related items count
   const { data: categories } = await supabase
     .from('categories')
-    .select('id, name, is_active')
+    .select(`
+      id,
+      name,
+      is_active,
+      expense_items (
+        id
+      )
+    `)
     .order('name')
+
+  const formattedCategories = (categories || []).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    is_active: c.is_active,
+    itemsCount: c.expense_items?.length || 0
+  }))
 
   return (
     <AppLayout profile={profile}>
@@ -33,7 +47,7 @@ export default async function AdminCategoriesPage() {
           <p className="text-[13px] text-slate-500">Verwalte die Kategorien für Spesenabrechnungen.</p>
         </div>
 
-        <CategoryList categories={categories || []} />
+        <CategoryList categories={formattedCategories} />
       </div>
     </AppLayout>
   )

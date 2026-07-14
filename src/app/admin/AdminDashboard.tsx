@@ -144,10 +144,8 @@ export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
             Spesenübersicht
           </CardTitle>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+            <DropdownMenuTrigger className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg flex items-center justify-center cursor-pointer">
+              <MoreVertical className="h-4 w-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg text-slate-700">
               <DropdownMenuItem 

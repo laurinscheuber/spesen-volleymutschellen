@@ -28,9 +28,9 @@ export default async function AdminCategoriesPage() {
   return (
     <AppLayout profile={profile}>
       <div className="space-y-6 max-w-5xl mx-auto w-full">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-[27px] font-bold text-[#E5EAF7] tracking-tight">Buchungskategorien</h1>
-          <p className="text-[13px] text-[#C0C0C0]">Verwalte die Kategorien für Spesenabrechnungen.</p>
+        <div className="flex flex-col gap-1 border-b border-slate-200 pb-4 mb-2">
+          <h1 className="text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight">Buchungskategorien</h1>
+          <p className="text-[13px] text-slate-500">Verwalte die Kategorien für Spesenabrechnungen.</p>
         </div>
 
         <CategoryList categories={categories || []} />

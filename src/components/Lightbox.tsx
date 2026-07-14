@@ -19,16 +19,16 @@ export default function Lightbox({ url, label = 'Beleg anzeigen' }: LightboxProp
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger className={cn(
         buttonVariants({ variant: 'outline', size: 'sm' }),
-        'border-[#4C6EBA]/30 bg-[#4C6EBA]/5 hover:bg-[#4C6EBA]/15 text-[#E5EAF7]/80 hover:text-white gap-1.5 h-8 flex items-center justify-center rounded-lg cursor-pointer transition-colors'
+        'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 gap-1.5 h-8 flex items-center justify-center rounded-lg cursor-pointer transition-colors shadow-sm'
       )}>
         {isPdf
-          ? <FileText className="h-3.5 w-3.5 text-[#4C6EBA]" />
-          : <ImageIcon className="h-3.5 w-3.5 text-[#4C6EBA]" />}
+          ? <FileText className="h-3.5 w-3.5 text-[#1B255F]" />
+          : <ImageIcon className="h-3.5 w-3.5 text-[#1B255F]" />}
         <span>{label}</span>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[95vw] sm:w-full border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] p-6 flex flex-col items-center justify-center rounded-xl shadow-2xl">
-        <h3 className="text-[17px] font-bold self-start mb-4 text-[#E5EAF7]">Beleg-Vorschau</h3>
-        <div className="w-full flex justify-center items-center rounded-xl overflow-hidden border border-[#4B4B4B] bg-[#1B255F]/60 min-h-[300px] md:min-h-[500px]">
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full border-slate-200 bg-white text-slate-900 p-6 flex flex-col items-center justify-center rounded-xl shadow-2xl">
+        <h3 className="text-[17px] font-bold self-start mb-4 text-[#1B255F]">Beleg-Vorschau</h3>
+        <div className="w-full flex justify-center items-center rounded-xl overflow-hidden border border-slate-200 bg-slate-50 min-h-[300px] md:min-h-[500px]">
           {isPdf ? (
             <iframe
               src={url}
@@ -51,14 +51,14 @@ export default function Lightbox({ url, label = 'Beleg anzeigen' }: LightboxProp
             rel="noopener noreferrer"
             className={cn(
               buttonVariants({ variant: 'outline' }),
-              'border-[#4B4B4B] bg-transparent text-[#C0C0C0] hover:text-white h-9 rounded-lg flex items-center justify-center'
+              'border-slate-200 bg-white text-slate-600 hover:text-slate-900 h-9 rounded-lg flex items-center justify-center shadow-sm'
             )}
           >
             Im neuen Tab öffnen
           </a>
           <Button
             onClick={() => setOpen(false)}
-            className="bg-[#4C6EBA] hover:bg-[#4C6EBA]/90 text-white h-9 rounded-lg px-6 font-semibold"
+            className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white h-9 rounded-lg px-6 font-semibold"
           >
             Schliessen
           </Button>

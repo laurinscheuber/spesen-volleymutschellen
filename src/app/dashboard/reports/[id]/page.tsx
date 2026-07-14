@@ -6,7 +6,8 @@ import Lightbox from '@/components/Lightbox'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChevronLeft, Calendar, FileText, CheckCircle, XCircle, Info } from 'lucide-react'
+import { ChevronLeft, Calendar, FileText, CheckCircle, XCircle, Info, Trash2 } from 'lucide-react'
+import { deleteExpenseReport } from '@/app/actions/expenses'
 
 export default async function UserReportDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
@@ -85,6 +86,12 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
     }
   }
 
+  async function handleDelete() {
+    'use server'
+    await deleteExpenseReport(params.id)
+    redirect('/dashboard')
+  }
+
   return (
     <AppLayout profile={profile || { full_name: 'Nutzer', email: '', role: 'user' }}>
       <div className="space-y-6 max-w-4xl mx-auto w-full">
@@ -105,7 +112,21 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
             </h1>
             <p className="text-[11px] text-slate-400 font-mono">ID: {report.id}</p>
           </div>
-          <div>{getStatusBadge(report.status)}</div>
+          <div className="flex flex-wrap items-center gap-3">
+            {getStatusBadge(report.status)}
+            {(report.status === 'offen' || report.status === 'abgelehnt') && (
+              <form action={handleDelete}>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 h-9 px-4 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Bericht löschen
+                </Button>
+              </form>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

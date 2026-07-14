@@ -210,6 +210,7 @@ Sportliche Grüsse,
 Volley Mutschellen Spesen-App`,
     })
   } else {
+    const reportUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://spesen.volleymutschellen.ch'}/dashboard/reports/${reportId}`
     await sendEmail({
       to: userProfile.email,
       subject: 'Dein Spesenbericht wurde abgelehnt',
@@ -220,7 +221,8 @@ Dein Spesenbericht vom ${createdDate} über CHF ${totalAmount} wurde leider abge
 Begründung des Kassiers:
 ${adminNotes || 'Keine Begründung angegeben.'}
 
-Du kannst einen neuen Bericht mit korrigierten Positionen im Dashboard einreichen.
+Du kannst deinen abgelehnten Bericht unter folgendem Link einsehen oder löschen, um ihn neu einzureichen:
+${reportUrl}
 
 Sportliche Grüsse,
 Volley Mutschellen Spesen-App`,

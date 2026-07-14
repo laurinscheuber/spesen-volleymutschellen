@@ -20,7 +20,7 @@ CREATE TABLE public.categories (
 );
 
 -- 3. Create Expense Reports Table
-CREATE TYPE public.report_status AS ENUM ('offen', 'ausbezahlt', 'abgelehnt');
+CREATE TYPE public.report_status AS ENUM ('offen', 'in_auftrag', 'ausbezahlt', 'abgelehnt');
 
 CREATE TABLE public.expense_reports (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -68,7 +68,10 @@ BEGIN
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    'user'
+    CASE 
+      WHEN NEW.email IN ('laurin.scheuber@volleymutschellen.ch', 'anna.schneiter@volleymutschellen.ch') THEN 'admin'::public.user_role
+      ELSE 'user'::public.user_role
+    END
   );
   RETURN NEW;
 END;

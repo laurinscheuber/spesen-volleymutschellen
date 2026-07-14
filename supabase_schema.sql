@@ -148,8 +148,8 @@ BEGIN
     IF OLD.user_id <> auth.uid() THEN
       RAISE EXCEPTION 'Fehler: Sie dürfen nur Ihre eigenen Berichte löschen.';
     END IF;
-    IF OLD.status <> 'offen' THEN
-      RAISE EXCEPTION 'Fehler: Nur offene Berichte können gelöscht werden.';
+    IF OLD.status NOT IN ('offen', 'abgelehnt') THEN
+      RAISE EXCEPTION 'Fehler: Nur offene oder abgelehnte Berichte können gelöscht werden.';
     END IF;
   END IF;
   RETURN OLD;

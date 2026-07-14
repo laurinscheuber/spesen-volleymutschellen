@@ -52,49 +52,51 @@ export default function ProfileOnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#1B255F] px-4 py-12 text-[#E5EAF7] relative overflow-hidden">
-      <div className="absolute inset-0 bg-net-pattern -z-10" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#4C6EBA]/15 via-[#1B255F]/90 to-[#1B255F] -z-10" />
-
-      <Card className="w-full max-w-md border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-2xl">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#4C6EBA]/10 ring-1 ring-[#4C6EBA]/20">
-            <Volleyball className="h-8 w-8 text-[#4C6EBA] animate-[spin_6s_linear_infinite]" />
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 text-slate-900 relative overflow-hidden bg-net-pattern">
+      <Card className="w-full max-w-md border-slate-200 bg-white text-slate-900 shadow-xl rounded-2xl">
+        <CardHeader className="space-y-4 text-center pt-8">
+          <div className="mx-auto flex h-24 w-auto items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="https://volleymutschellen.ch/images/volley-logo-white.png" 
+              alt="Volley Mutschellen Logo" 
+              className="h-20 w-auto logo-blue object-contain" 
+            />
           </div>
           <div className="space-y-1">
-            <h1 className="font-black text-[31px] uppercase tracking-wider text-[#E5EAF7] leading-tight">
+            <h1 className="font-black text-[27px] uppercase tracking-wider text-[#1B255F] leading-tight">
               Stammdaten hinterlegen
             </h1>
-            <CardDescription className="text-[13px] text-[#C0C0C0]">
+            <CardDescription className="text-[13px] text-slate-500">
               Bevor du Spesen einreichen kannst, benötigen wir deinen Namen und deine IBAN für die Auszahlung.
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-wider text-[#C0C0C0]">
+              <label htmlFor="fullName" className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
                 Vollständiger Name (Vorname & Nachname)
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C0C0C0]" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   id="fullName"
                   name="fullName"
                   placeholder="Max Muster"
                   required
                   disabled={loading}
-                  className="pl-10 border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0]/50 focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
+                  className="pl-10 border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="iban" className="text-[10px] font-bold uppercase tracking-wider text-[#C0C0C0]">
+              <label htmlFor="iban" className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
                 IBAN für Auszahlung (Schweizer Bankkonto)
               </label>
               <div className="relative">
-                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C0C0C0]" />
+                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   id="iban"
                   name="iban"
@@ -103,16 +105,16 @@ export default function ProfileOnboardingPage() {
                   placeholder="CH93 0000 0000 0000 0000 0"
                   required
                   disabled={loading}
-                  className="pl-10 border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0]/50 focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
+                  className="pl-10 border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
                 />
               </div>
-              <p className="text-[10px] text-[#C0C0C0]/70">
+              <p className="text-[10px] text-slate-400">
                 Deine IBAN wird für die Spesenüberweisung durch den Kassier verwendet.
               </p>
             </div>
 
             {error && (
-              <div className="rounded-lg bg-destructive/10 p-3 text-[13px] text-destructive-foreground border border-destructive/20">
+              <div className="rounded-lg bg-red-50 p-3 text-[13px] text-red-800 border border-red-200">
                 {error}
               </div>
             )}
@@ -120,7 +122,7 @@ export default function ProfileOnboardingPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#4C6EBA] hover:bg-[#4C6EBA]/90 text-white font-semibold transition-all duration-200"
+              className="w-full bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-semibold transition-all duration-200 py-5 rounded-lg"
             >
               {loading ? (
                 <>

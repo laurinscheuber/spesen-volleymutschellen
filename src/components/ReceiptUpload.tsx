@@ -79,10 +79,10 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
     <div className="space-y-2">
       <label className={`flex flex-col items-center justify-center border border-dashed rounded-xl p-5 cursor-pointer transition-colors ${
         disabled || isbusy
-          ? 'bg-[#1B255F]/20 border-[#4B4B4B]/30 pointer-events-none opacity-60'
+          ? 'bg-slate-50 border-slate-200 pointer-events-none opacity-60'
           : uploaded
           ? 'border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/10'
-          : 'border-[#4C6EBA]/30 bg-[#1B255F]/40 hover:bg-[#1B255F]/60 hover:border-[#4C6EBA]/50'
+          : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
       }`}>
         <input
           type="file"
@@ -95,36 +95,36 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
         <div className="flex flex-col items-center text-center space-y-1.5">
           {compressing ? (
             <>
-              <Loader2 className="h-6 w-6 animate-spin text-[#4C6EBA]" />
-              <span className="text-xs text-[#C0C0C0]">Komprimiere Bild...</span>
+              <Loader2 className="h-6 w-6 animate-spin text-[#1B255F]" />
+              <span className="text-xs text-slate-500">Komprimiere Bild...</span>
             </>
           ) : uploading ? (
             <>
-              <Loader2 className="h-6 w-6 animate-spin text-[#4C6EBA]" />
-              <span className="text-xs text-[#C0C0C0]">Lade hoch...</span>
+              <Loader2 className="h-6 w-6 animate-spin text-[#1B255F]" />
+              <span className="text-xs text-slate-500">Lade hoch...</span>
             </>
           ) : uploaded ? (
             <>
-              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
-              <span className="text-xs text-emerald-400 font-semibold">Beleg hochgeladen</span>
-              <span className="text-[10px] text-[#C0C0C0] truncate max-w-[200px]">{fileName}</span>
+              <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+              <span className="text-xs text-emerald-500 font-semibold">Beleg hochgeladen</span>
+              <span className="text-[10px] text-slate-500 truncate max-w-[200px]">{fileName}</span>
             </>
           ) : (
             <>
-              <div className="flex gap-2 text-[#4C6EBA]">
+              <div className="flex gap-2 text-[#1B255F]">
                 <Camera className="h-5 w-5" />
                 <FileUp className="h-5 w-5" />
               </div>
-              <span className="text-xs font-semibold text-[#E5EAF7]/80">Foto aufnehmen oder Datei hochladen</span>
-              <span className="text-[10px] text-[#C0C0C0]/60">Bilder & PDFs akzeptiert</span>
+              <span className="text-xs font-semibold text-slate-700">Foto aufnehmen oder Datei hochladen</span>
+              <span className="text-[10px] text-slate-400">Bilder & PDFs akzeptiert</span>
             </>
           )}
         </div>
       </label>
 
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-lg p-2.5">
-          <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-red-400" />
+        <div className="flex items-center gap-1.5 text-xs text-red-800 bg-red-50 border border-red-200 rounded-lg p-2.5">
+          <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-red-500" />
           <span>{error}</span>
         </div>
       )}

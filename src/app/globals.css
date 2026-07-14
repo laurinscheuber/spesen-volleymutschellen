@@ -5,23 +5,23 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-background: #1B255F;
-  --color-foreground: #E5EAF7;
-  --color-card: #22307B;
-  --color-card-foreground: #E5EAF7;
-  --color-popover: #1B255F;
-  --color-popover-foreground: #E5EAF7;
-  --color-primary: #4C6EBA;
-  --color-primary-foreground: #E5EAF7;
-  --color-secondary: #22307B;
-  --color-secondary-foreground: #E5EAF7;
-  --color-muted: #22307B;
-  --color-muted-foreground: #C0C0C0;
-  --color-accent: #4C6EBA;
-  --color-accent-foreground: #E5EAF7;
-  --color-border: #4B4B4B;
-  --color-input: #4B4B4B;
-  --color-ring: #4C6EBA;
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a;
+  --color-primary: #1B255F;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #E5EAF7;
+  --color-accent-foreground: #1B255F;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #1B255F;
   --color-destructive: #ef4444;
 
   --font-sans: var(--font-montserrat);
@@ -38,66 +38,36 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --background: #1B255F;
-  --foreground: #E5EAF7;
-  --card: #22307B;
-  --card-foreground: #E5EAF7;
-  --popover: #1B255F;
-  --popover-foreground: #E5EAF7;
-  --primary: #4C6EBA;
-  --primary-foreground: #E5EAF7;
-  --secondary: #22307B;
-  --secondary-foreground: #E5EAF7;
-  --muted: #22307B;
-  --muted-foreground: #C0C0C0;
-  --accent: #4C6EBA;
-  --accent-foreground: #E5EAF7;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #1B255F;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #E5EAF7;
+  --accent-foreground: #1B255F;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #4B4B4B;
-  --input: #4B4B4B;
-  --ring: #4C6EBA;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #1B255F;
   --radius: 0.5rem;
-  --sidebar: #1B255F;
-  --sidebar-foreground: #E5EAF7;
-  --sidebar-primary: #4C6EBA;
-  --sidebar-primary-foreground: #E5EAF7;
-  --sidebar-accent: #22307B;
-  --sidebar-accent-foreground: #E5EAF7;
-  --sidebar-border: #4B4B4B;
-  --sidebar-ring: #4C6EBA;
-}
-
-.dark {
-  --background: #1B255F;
-  --foreground: #E5EAF7;
-  --card: #22307B;
-  --card-foreground: #E5EAF7;
-  --popover: #1B255F;
-  --popover-foreground: #E5EAF7;
-  --primary: #4C6EBA;
-  --primary-foreground: #E5EAF7;
-  --secondary: #22307B;
-  --secondary-foreground: #E5EAF7;
-  --muted: #22307B;
-  --muted-foreground: #C0C0C0;
-  --accent: #4C6EBA;
-  --accent-foreground: #E5EAF7;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #4B4B4B;
-  --input: #4B4B4B;
-  --ring: #4C6EBA;
-  --sidebar: #1B255F;
-  --sidebar-foreground: #E5EAF7;
-  --sidebar-primary: #4C6EBA;
-  --sidebar-primary-foreground: #E5EAF7;
-  --sidebar-accent: #22307B;
-  --sidebar-accent-foreground: #E5EAF7;
-  --sidebar-border: #4B4B4B;
-  --sidebar-ring: #4C6EBA;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #1B255F;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #1B255F;
 }
 
 @layer base {
@@ -114,47 +84,52 @@
     scroll-behavior: smooth;
   }
 
-  /* Custom scrollbar — matches the dark navy theme */
+  /* Custom scrollbar — matches light modern design */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #1B255F;
+    background: #f1f5f9;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #4B4B4B;
+    background: #cbd5e1;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #4C6EBA;
+    background: #94a3b8;
   }
 
-  /* Date/time input icon colour fix for dark mode */
+  /* Date/time input icon colour fix for light mode */
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.7);
+    filter: none;
     cursor: pointer;
   }
 }
 
-/* Subtle diamond/net pattern used on full-page auth screens */
+/* Converts the white PNG logo to the primary blue #1B255F */
+.logo-blue {
+  filter: brightness(0) saturate(100%) invert(14%) sepia(35%) saturate(3535%) hue-rotate(224deg) brightness(96%) contrast(95%);
+}
+
+/* Subtle diamond/net pattern in light grey */
 .bg-net-pattern {
   background-image:
     repeating-linear-gradient(
       45deg,
-      rgba(76, 110, 186, 0.04) 0px,
-      rgba(76, 110, 186, 0.04) 1px,
+      rgba(27, 37, 95, 0.02) 0px,
+      rgba(27, 37, 95, 0.02) 1px,
       transparent 1px,
       transparent 28px
     ),
     repeating-linear-gradient(
       -45deg,
-      rgba(76, 110, 186, 0.04) 0px,
-      rgba(76, 110, 186, 0.04) 1px,
+      rgba(27, 37, 95, 0.02) 0px,
+      rgba(27, 37, 95, 0.02) 1px,
       transparent 1px,
       transparent 28px
     );

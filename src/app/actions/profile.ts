@@ -48,3 +48,41 @@ export async function updateProfile(formData: FormData) {
   revalidatePath('/', 'layout')
   return { success: true }
 }
+
+export async function updateUserRole(userId: string, newRole: 'user' | 'admin') {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Nicht authentifiziert.' }
+  }
+
+  // Check if caller is admin
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!callerProfile || callerProfile.role !== 'admin') {
+    return { error: 'Keine Administrator-Rechte.' }
+  }
+
+  // Update target user's role
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      role: newRole,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Update user role error:', error)
+    return { error: 'Fehler beim Aktualisieren der Rolle: ' + error.message }
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/', 'layout')
+  return { success: true }
+}

@@ -15,6 +15,13 @@ import {
   X,
   Wallet
 } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface ExpenseItem {
   id: string
@@ -24,34 +31,63 @@ interface ExpenseItem {
   category_name: string
 }
 
-export default function AdminStatsDashboard({ initialItems }: { initialItems: ExpenseItem[] }) {
-  const [startDate, setStartDate] = useState(() => {
-    // Default to start of current year
-    const now = new Date()
-    return `${now.getFullYear()}-01-01`
-  })
-  const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0]
-  })
+// Helper to get volleyball season range
+// The Swiss Volleyball season runs from autumn to spring.
+// The financial club year (Vereinsjahr) starts on June 1st and ends on May 31st.
+function getSeasonRange(offsetYear = 0): { start: string; end: string; label: string } {
+  const now = new Date()
+  let currentYear = now.getFullYear()
+  
+  // If we are currently before June, the current season started in the previous calendar year
+  if (now.getMonth() < 5) { // 0-indexed: Jan (0) to May (4)
+    currentYear -= 1
+  }
+  
+  const targetYear = currentYear + offsetYear
+  
+  return {
+    start: `${targetYear}-06-01`,
+    end: `${targetYear + 1}-05-31`,
+    label: `Saison ${targetYear}/${targetYear + 1}`
+  }
+}
 
-  // Quick helper to clear filters
+export default function AdminStatsDashboard({ initialItems }: { initialItems: ExpenseItem[] }) {
+  // Default to current volleyball season
+  const [startDate, setStartDate] = useState(() => getSeasonRange(0).start)
+  const [endDate, setEndDate] = useState(() => getSeasonRange(0).end)
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [teamFilter, setTeamFilter] = useState('all')
+
+  // Extract unique categories and teams for filter lists
+  const categoriesList = useMemo(() => {
+    return Array.from(new Set(initialItems.map(item => item.category_name))).sort()
+  }, [initialItems])
+
+  const teamsList = useMemo(() => {
+    return Array.from(new Set(initialItems.map(item => item.team))).sort()
+  }, [initialItems])
+
+  // Quick helper to clear all filters
   const handleShowAll = () => {
     setStartDate('')
     setEndDate('')
+    setCategoryFilter('all')
+    setTeamFilter('all')
   }
 
-  // Quick helper to filter for current year
-  const handleCurrentYear = () => {
-    const year = new Date().getFullYear()
-    setStartDate(`${year}-01-01`)
-    setEndDate(`${year}-12-31`)
+  // Quick helper to filter for current season
+  const handleCurrentSeason = () => {
+    const range = getSeasonRange(0)
+    setStartDate(range.start)
+    setEndDate(range.end)
   }
 
-  // Quick helper to filter for last year
-  const handleLastYear = () => {
-    const year = new Date().getFullYear() - 1
-    setStartDate(`${year}-01-01`)
-    setEndDate(`${year}-12-31`)
+  // Quick helper to filter for last season
+  const handleLastSeason = () => {
+    const range = getSeasonRange(-1)
+    setStartDate(range.start)
+    setEndDate(range.end)
   }
 
   // Filtered dataset
@@ -60,9 +96,11 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
       const itemDate = item.date.split('T')[0]
       if (startDate && itemDate < startDate) return false
       if (endDate && itemDate > endDate) return false
+      if (categoryFilter !== 'all' && item.category_name !== categoryFilter) return false
+      if (teamFilter !== 'all' && item.team !== teamFilter) return false
       return true
     })
-  }, [initialItems, startDate, endDate])
+  }, [initialItems, startDate, endDate, categoryFilter, teamFilter])
 
   // KPIs
   const totalAmount = useMemo(() => {
@@ -132,6 +170,8 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
     })
   }, [filteredItems])
 
+  const hasActiveFilters = startDate || endDate || categoryFilter !== 'all' || teamFilter !== 'all'
+
   return (
     <div className="space-y-6">
       {/* Filters Card */}
@@ -139,9 +179,9 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
         <CardHeader className="border-b border-slate-100 pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
             <Filter className="h-4 w-4 text-[#1B255F]" />
-            Filter & Zeitraum auswählen
+            Spesen filtern
           </CardTitle>
-          {(startDate || endDate) && (
+          {hasActiveFilters && (
             <Button
               variant="ghost"
               size="sm"
@@ -154,22 +194,23 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
           )}
         </CardHeader>
         <CardContent className="pt-4 space-y-4">
+          {/* Quick Selection Buttons */}
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={handleCurrentYear}
+              onClick={handleCurrentSeason}
               className="text-xs border-slate-200 hover:bg-slate-50 rounded-lg h-8 font-bold text-[#1B255F]"
             >
-              Aktuelles Jahr
+              Aktuelle Saison
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleLastYear}
+              onClick={handleLastSeason}
               className="text-xs border-slate-200 hover:bg-slate-50 rounded-lg h-8 font-bold text-[#1B255F]"
             >
-              Letztes Jahr
+              Letzte Saison
             </Button>
             <Button
               variant="outline"
@@ -181,30 +222,76 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+          {/* Detailed Filters (Dates + Selects) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 border-t border-slate-100 pt-4">
+            {/* Start Date */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
                 <Calendar className="h-3 w-3 text-slate-400" />
-                Startdatum (Von)
+                Startdatum
               </label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="h-9 border-slate-200 bg-white text-slate-900 text-xs focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
+                className="h-9 border-slate-200 bg-white text-slate-900 text-xs focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F] rounded-lg"
               />
             </div>
+
+            {/* End Date */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
                 <Calendar className="h-3 w-3 text-slate-400" />
-                Enddatum (Bis)
+                Enddatum
               </label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="h-9 border-slate-200 bg-white text-slate-900 text-xs focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
+                className="h-9 border-slate-200 bg-white text-slate-900 text-xs focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F] rounded-lg"
               />
+            </div>
+
+            {/* Category Filter */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                <Tags className="h-3 w-3 text-slate-400" />
+                Kategorie
+              </label>
+              <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val || 'all')}>
+                <SelectTrigger className="h-9 border-slate-200 text-xs bg-white w-full rounded-lg">
+                  <SelectValue placeholder="Alle Kategorien" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-slate-200">
+                  <SelectItem value="all" className="text-xs">Alle Kategorien</SelectItem>
+                  {categoriesList.map((cat) => (
+                    <SelectItem key={cat} value={cat} className="text-xs">
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Team Filter */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                <Users className="h-3 w-3 text-slate-400" />
+                Team / Ressort
+              </label>
+              <Select value={teamFilter} onValueChange={(val) => setTeamFilter(val || 'all')}>
+                <SelectTrigger className="h-9 border-slate-200 text-xs bg-white w-full rounded-lg">
+                  <SelectValue placeholder="Alle Teams" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-slate-200">
+                  <SelectItem value="all" className="text-xs">Alle Teams</SelectItem>
+                  {teamsList.map((team) => (
+                    <SelectItem key={team} value={team} className="text-xs">
+                      {team}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -220,7 +307,7 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
               <p className="text-2xl font-black text-[#1B255F] font-mono leading-none pt-0.5">
                 CHF {totalAmount.toFixed(2)}
               </p>
-              <p className="text-[11px] text-slate-400">Für den gewählten Zeitraum</p>
+              <p className="text-[11px] text-slate-400">Für die gewählten Filter</p>
             </div>
             <div className="p-3 bg-[#1B255F]/5 text-[#1B255F] rounded-xl border border-[#1B255F]/10">
               <DollarSign className="h-5 w-5" />
@@ -275,7 +362,7 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
             {categoryStats.length === 0 ? (
               <p className="text-xs text-slate-400 py-6 text-center">Keine Daten verfügbar.</p>
             ) : (
-              categoryStats.map((stat, idx) => (
+              categoryStats.map((stat) => (
                 <div key={stat.name} className="space-y-1.5">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-800 flex items-center gap-1.5">

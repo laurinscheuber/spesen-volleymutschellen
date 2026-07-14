@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { signOut } from '@/app/actions/auth'
-import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags } from 'lucide-react'
+import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags, Search, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface LayoutProps {
@@ -31,6 +31,8 @@ export default function AppLayout({ children, profile }: LayoutProps) {
     ? [
         { href: '/dashboard', label: 'Meine Spesen', icon: FileText },
         { href: '/admin', label: 'Spesenübersicht', icon: ClipboardList },
+        { href: '/admin/archive', label: 'Archiv', icon: Search },
+        { href: '/admin/stats', label: 'Statistiken', icon: BarChart3 },
         { href: '/admin/members', label: 'Mitglieder & IBANs', icon: Users },
         { href: '/admin/categories', label: 'Kategorien', icon: Tags },
       ]

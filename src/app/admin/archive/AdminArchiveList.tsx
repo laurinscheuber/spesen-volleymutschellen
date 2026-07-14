@@ -188,7 +188,7 @@ export default function AdminArchiveList({
             {/* Status Filter */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || 'all')}>
                 <SelectTrigger className="h-9 border-slate-200 text-xs bg-white">
                   <SelectValue placeholder="Alle Status" />
                 </SelectTrigger>
@@ -205,7 +205,7 @@ export default function AdminArchiveList({
             {/* Category Filter */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">Kategorie</label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val || 'all')}>
                 <SelectTrigger className="h-9 border-slate-200 text-xs bg-white">
                   <SelectValue placeholder="Alle Kategorien" />
                 </SelectTrigger>
@@ -223,7 +223,7 @@ export default function AdminArchiveList({
             {/* Team Filter */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">Team / Ressort</label>
-              <Select value={teamFilter} onValueChange={setTeamFilter}>
+              <Select value={teamFilter} onValueChange={(val) => setTeamFilter(val || 'all')}>
                 <SelectTrigger className="h-9 border-slate-200 text-xs bg-white">
                   <SelectValue placeholder="Alle Teams" />
                 </SelectTrigger>

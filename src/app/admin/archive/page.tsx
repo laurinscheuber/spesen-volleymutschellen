@@ -72,9 +72,9 @@ export default async function AdminArchivePage() {
       total,
       itemsCount,
       // Metadata fields to make searching extremely easy in client component
-      categories: Array.from(new Set(categoriesList)),
-      purposes: Array.from(new Set(purposesList)),
-      teams: Array.from(new Set(teamsList)),
+      categories: Array.from(new Set(categoriesList)) as string[],
+      purposes: Array.from(new Set(purposesList)) as string[],
+      teams: Array.from(new Set(teamsList)) as string[],
     }
   })
 

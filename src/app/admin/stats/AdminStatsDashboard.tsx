@@ -12,7 +12,8 @@ import {
   Tags, 
   DollarSign,
   Filter,
-  X
+  X,
+  Wallet
 } from 'lucide-react'
 
 interface ExpenseItem {

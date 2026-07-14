@@ -29,6 +29,7 @@ CREATE TABLE public.expense_reports (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   paid_at TIMESTAMPTZ,
   admin_notes TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT status_paid_at_check CHECK (
     (status = 'ausbezahlt' AND paid_at IS NOT NULL) OR 
     (status <> 'ausbezahlt' AND paid_at IS NULL)
@@ -130,6 +131,7 @@ BEGIN
     END IF;
   END IF;
   
+  NEW.updated_at = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

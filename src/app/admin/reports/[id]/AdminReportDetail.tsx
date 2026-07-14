@@ -24,7 +24,7 @@ interface Item {
 interface ReportDetails {
   id: string
   created_at: string
-  status: 'offen' | 'ausbezahlt' | 'abgelehnt'
+  status: 'offen' | 'in_auftrag' | 'ausbezahlt' | 'abgelehnt'
   user_name: string
   user_email: string
   iban: string
@@ -43,13 +43,26 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
   const [copied, setCopied] = useState(false)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [adminNotes, setAdminNotes] = useState('')
-  const [submitting, setSubmitting] = useState<'payout' | 'reject' | null>(null)
+  const [submitting, setSubmitting] = useState<'in_auftrag' | 'payout' | 'reject' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleCopyIban = () => {
     navigator.clipboard.writeText(report.iban)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleSetInAuftrag = async () => {
+    setSubmitting('in_auftrag')
+    setError(null)
+    const result = await updateReportStatus(report.id, 'in_auftrag')
+    if (result.error) {
+      setError(result.error)
+      setSubmitting(null)
+    } else {
+      router.push('/admin')
+      router.refresh()
+    }
   }
 
   const handleApprove = async () => {
@@ -79,6 +92,39 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
     }
   }
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'ausbezahlt':
+        return (
+          <div className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            Ausbezahlt
+          </div>
+        )
+      case 'in_auftrag':
+        return (
+          <div className="flex items-center gap-1.5 text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <Info className="h-4 w-4 text-sky-600" />
+            Zahlung erfasst (In Auftrag)
+          </div>
+        )
+      case 'abgelehnt':
+        return (
+          <div className="flex items-center gap-1.5 text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <XCircle className="h-4 w-4 text-red-600" />
+            Abgelehnt
+          </div>
+        )
+      default:
+        return (
+          <div className="flex items-center gap-1.5 text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <Info className="h-4 w-4 text-amber-600" />
+            Offen
+          </div>
+        )
+    }
+  }
+
   const isPdf = selectedReceipt.toLowerCase().split('?')[0].endsWith('.pdf')
 
   return (
@@ -95,32 +141,65 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-2xl font-black uppercase tracking-wider text-[#1B255F]">Spesenabrechnung prüfen</h1>
-          <p className="text-[11px] text-slate-400 font-mono mt-1">Bericht ID: {report.id}</p>
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-black uppercase tracking-wider text-[#1B255F]">Spesenabrechnung prüfen</h1>
+            {getStatusBadge(report.status)}
+          </div>
+          <p className="text-[11px] text-slate-400 font-mono">Bericht ID: {report.id}</p>
         </div>
 
         {report.status === 'offen' && (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               disabled={submitting !== null}
               onClick={() => setRejectDialogOpen(true)}
-              className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100/80 h-10 px-5 rounded-lg transition-colors shadow-sm"
+              className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100/80 h-10 px-4 rounded-lg transition-colors shadow-sm"
             >
               Ablehnen
             </Button>
             <Button
               disabled={submitting !== null}
+              onClick={handleSetInAuftrag}
+              className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center"
+            >
+              {submitting === 'in_auftrag' ? (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              ) : (
+                <ClipboardList className="h-4 w-4 text-white" />
+              )}
+              Zahlung erfasst
+            </Button>
+            <Button
+              disabled={submitting !== null}
               onClick={handleApprove}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-6 rounded-lg font-semibold shadow-md gap-2"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center"
             >
               {submitting === 'payout' ? (
                 <Loader2 className="h-4 w-4 animate-spin text-white" />
               ) : (
                 <CheckCircle2 className="h-4 w-4 text-white" />
               )}
-              Als ausbezahlt markieren
+              Ausbezahlen
+            </Button>
+          </div>
+        )}
+
+        {report.status === 'in_auftrag' && (
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500 hidden md:inline">Zahlung erfasst. Freigabe erfolgt automatisch in 24h.</span>
+            <Button
+              disabled={submitting !== null}
+              onClick={handleApprove}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center"
+            >
+              {submitting === 'payout' ? (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 text-white" />
+              )}
+              Jetzt auszahlen
             </Button>
           </div>
         )}

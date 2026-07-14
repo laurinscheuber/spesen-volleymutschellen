@@ -111,9 +111,8 @@
   }
 }
 
-/* Converts the white PNG logo to the primary blue #1B255F */
 .logo-blue {
-  filter: brightness(0) saturate(100%) invert(14%) sepia(35%) saturate(3535%) hue-rotate(224deg) brightness(96%) contrast(95%);
+  filter: brightness(0) saturate(100%) invert(13%) sepia(85%) saturate(2462%) hue-rotate(227deg) brightness(95%) contrast(104%);
 }
 
 /* Subtle diamond/net pattern in light grey */

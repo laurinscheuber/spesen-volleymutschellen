@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { ChevronLeft, Calendar, User, Copy, Check, CheckCircle2, XCircle, Loader2, Info, Eye, ClipboardList } from 'lucide-react'
+import { ChevronLeft, Calendar, User, Copy, Check, CheckCircle2, XCircle, Loader2, Info, Eye, ClipboardList, Play } from 'lucide-react'
 
 interface Item {
   id: string
@@ -37,7 +37,17 @@ function formatIban(iban: string): string {
   return clean.replace(/(.{4})/g, '$1 ').trim()
 }
 
-export default function AdminReportDetail({ report }: { report: ReportDetails }) {
+export default function AdminReportDetail({
+  report,
+  queueIndex,
+  queueTotal,
+  nextReportId,
+}: {
+  report: ReportDetails
+  queueIndex?: number
+  queueTotal?: number
+  nextReportId: string | null
+}) {
   const router = useRouter()
   const [selectedReceipt, setSelectedReceipt] = useState<string>(report.items[0]?.receipt_url || '')
   const [copied, setCopied] = useState(false)
@@ -52,6 +62,21 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleTransition = () => {
+    if (queueIndex !== undefined) {
+      if (nextReportId) {
+        router.push(`/admin/reports/${nextReportId}?queue=true`)
+        router.refresh()
+      } else {
+        router.push('/admin?queue_done=true')
+        router.refresh()
+      }
+    } else {
+      router.push('/admin')
+      router.refresh()
+    }
+  }
+
   const handleSetInAuftrag = async () => {
     setSubmitting('in_auftrag')
     setError(null)
@@ -60,8 +85,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       setError(result.error)
       setSubmitting(null)
     } else {
-      router.push('/admin')
-      router.refresh()
+      handleTransition()
     }
   }
 
@@ -73,8 +97,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       setError(result.error)
       setSubmitting(null)
     } else {
-      router.push('/admin')
-      router.refresh()
+      handleTransition()
     }
   }
 
@@ -87,8 +110,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       setSubmitting(null)
     } else {
       setRejectDialogOpen(false)
-      router.push('/admin')
-      router.refresh()
+      handleTransition()
     }
   }
 
@@ -129,6 +151,20 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
 
   return (
     <div className="space-y-6">
+      {queueIndex !== undefined && (
+        <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2 text-xs text-sky-800 font-bold">
+            <Play className="h-4 w-4 fill-current text-sky-600 animate-pulse shrink-0" />
+            <span>Spesen-Warteschlange aktiv: Abrechnungsmappe {queueIndex} von {queueTotal}</span>
+          </div>
+          <Link href="/admin">
+            <Button variant="ghost" size="sm" className="text-xs text-sky-700 hover:text-sky-800 hover:bg-sky-100/60 h-8 rounded-lg gap-1 font-bold">
+              Warteschlange beenden
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* Back button */}
       <div>
         <Link href="/admin">

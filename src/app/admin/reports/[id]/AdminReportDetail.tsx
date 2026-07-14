@@ -32,6 +32,11 @@ interface ReportDetails {
   total: number
 }
 
+function formatIban(iban: string): string {
+  const clean = iban.replace(/\s/g, '')
+  return clean.replace(/(.{4})/g, '$1 ').trim()
+}
+
 export default function AdminReportDetail({ report }: { report: ReportDetails }) {
   const router = useRouter()
   const [selectedReceipt, setSelectedReceipt] = useState<string>(report.items[0]?.receipt_url || '')
@@ -48,15 +53,12 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
   }
 
   const handleApprove = async () => {
-    if (!confirm('Diesen Spesenbericht als ausbezahlt markieren? Der Nutzer erhält eine E-Mail-Benachrichtigung.')) {
-      return
-    }
     setSubmitting('payout')
     setError(null)
     const result = await updateReportStatus(report.id, 'ausbezahlt')
-    setSubmitting(null)
     if (result.error) {
       setError(result.error)
+      setSubmitting(null)
     } else {
       router.push('/admin')
       router.refresh()
@@ -67,9 +69,9 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
     setSubmitting('reject')
     setError(null)
     const result = await updateReportStatus(report.id, 'abgelehnt', adminNotes)
-    setSubmitting(null)
     if (result.error) {
       setError(result.error)
+      setSubmitting(null)
     } else {
       setRejectDialogOpen(false)
       router.push('/admin')
@@ -84,7 +86,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       {/* Back button */}
       <div>
         <Link href="/admin">
-          <Button variant="ghost" className="text-[#C0C0C0] hover:text-white hover:bg-[#22307B]/50 pl-0 gap-1 h-9 rounded-lg">
+          <Button variant="ghost" className="text-slate-500 hover:text-slate-700 hover:bg-slate-50 pl-0 gap-1 h-9 rounded-lg">
             <ChevronLeft className="h-4 w-4" />
             Zurück zu offenen Spesen
           </Button>
@@ -92,10 +94,10 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       </div>
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#4B4B4B]/50 pb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-wider text-[#E5EAF7]">Spesenabrechnung prüfen</h1>
-          <p className="text-[11px] text-[#C0C0C0] font-mono mt-1">Bericht ID: {report.id}</p>
+          <h1 className="text-2xl font-black uppercase tracking-wider text-[#1B255F]">Spesenabrechnung prüfen</h1>
+          <p className="text-[11px] text-slate-400 font-mono mt-1">Bericht ID: {report.id}</p>
         </div>
 
         {report.status === 'offen' && (
@@ -104,7 +106,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
               variant="outline"
               disabled={submitting !== null}
               onClick={() => setRejectDialogOpen(true)}
-              className="border-rose-500/25 bg-rose-500/5 text-rose-400 hover:bg-rose-500/10 h-10 px-5 rounded-lg transition-colors"
+              className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100/80 h-10 px-5 rounded-lg transition-colors shadow-sm"
             >
               Ablehnen
             </Button>
@@ -114,9 +116,9 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
               className="bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-6 rounded-lg font-semibold shadow-md gap-2"
             >
               {submitting === 'payout' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
               ) : (
-                <CheckCircle2 className="h-4 w-4" />
+                <CheckCircle2 className="h-4 w-4 text-white" />
               )}
               Als ausbezahlt markieren
             </Button>
@@ -125,7 +127,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
       </div>
 
       {error && (
-        <div className="rounded-lg bg-destructive/10 p-4 text-[13px] text-destructive-foreground border border-destructive/20">
+        <div className="rounded-lg bg-red-50 p-4 text-[13px] text-red-800 border border-red-200">
           {error}
         </div>
       )}
@@ -135,49 +137,49 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
         {/* Left column */}
         <div className="lg:col-span-7 space-y-6">
           {/* Member Card */}
-          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
-            <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
-              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Mitglied & Auszahlung</CardTitle>
+          <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
+            <CardHeader className="border-b border-slate-100 pb-4">
+              <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mitglied & Auszahlung</CardTitle>
             </CardHeader>
             <CardContent className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-[#4C6EBA]/10 rounded-md border border-[#4C6EBA]/20">
-                    <User className="h-3.5 w-3.5 text-[#4C6EBA]" />
+                  <div className="p-1.5 bg-[#1B255F]/5 rounded-md border border-[#1B255F]/10">
+                    <User className="h-3.5 w-3.5 text-[#1B255F]" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-[#C0C0C0]">Name</p>
-                    <p className="text-[#E5EAF7] font-semibold text-[13px]">{report.user_name}</p>
-                    <p className="text-[11px] text-[#C0C0C0]">{report.user_email}</p>
+                    <p className="text-[10px] text-slate-400">Name</p>
+                    <p className="text-slate-900 font-semibold text-[13px]">{report.user_name}</p>
+                    <p className="text-[11px] text-slate-500">{report.user_email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-[#4C6EBA]/10 rounded-md border border-[#4C6EBA]/20">
-                    <Calendar className="h-3.5 w-3.5 text-[#4C6EBA]" />
+                  <div className="p-1.5 bg-[#1B255F]/5 rounded-md border border-[#1B255F]/10">
+                    <Calendar className="h-3.5 w-3.5 text-[#1B255F]" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-[#C0C0C0]">Eingereicht am</p>
-                    <p className="text-[#E5EAF7] font-mono text-[13px]">
+                    <p className="text-[10px] text-slate-400">Eingereicht am</p>
+                    <p className="text-slate-700 font-mono text-[13px]">
                       {new Date(report.created_at).toLocaleDateString('de-CH')}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3 bg-[#1B255F]/50 border border-[#4B4B4B] p-4 rounded-xl flex flex-col justify-between">
+              <div className="space-y-3 bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-[#C0C0C0] uppercase tracking-wider block">Auszahlungs-IBAN</span>
-                  <span className="font-mono text-xs text-[#E5EAF7] block mt-1 break-all">{report.iban}</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Auszahlungs-IBAN</span>
+                  <span className="font-mono text-xs text-slate-900 font-bold block mt-1 break-all">{formatIban(report.iban)}</span>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyIban}
-                  className="mt-2 text-xs border-[#4B4B4B] hover:bg-[#22307B] text-[#E5EAF7]/80 hover:text-white gap-1.5 h-8 w-full rounded-md"
+                  className="mt-2 text-xs border-slate-200 hover:bg-slate-100 text-slate-700 hover:text-slate-900 gap-1.5 h-8 w-full rounded-md shadow-sm bg-white"
                 >
                   {copied ? (
                     <>
-                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
                       <span>Kopiert!</span>
                     </>
                   ) : (
@@ -192,24 +194,24 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
           </Card>
 
           {/* Items Card */}
-          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
-            <CardHeader className="border-b border-[#4B4B4B]/50 pb-4 flex flex-row justify-between items-center">
-              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Auszahlungsposten</CardTitle>
+          <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
+            <CardHeader className="border-b border-slate-100 pb-4 flex flex-row justify-between items-center">
+              <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Auszahlungsposten</CardTitle>
               <div className="text-right">
-                <span className="text-[10px] text-[#C0C0C0] uppercase block">Gesamtsumme</span>
-                <span className="font-mono text-base font-bold text-white">CHF {report.total.toFixed(2)}</span>
+                <span className="text-[10px] text-slate-400 uppercase block">Gesamtsumme</span>
+                <span className="font-mono text-base font-bold text-slate-900">CHF {report.total.toFixed(2)}</span>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
-                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
-                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
-                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
-                      <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
-                      <TableHead className="text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
+                    <TableRow className="hover:bg-transparent border-slate-100">
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
+                      <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
                       <TableHead className="w-16" />
                     </TableRow>
                   </TableHeader>
@@ -218,26 +220,26 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
                       <TableRow
                         key={item.id}
                         onClick={() => setSelectedReceipt(item.receipt_url)}
-                        className={`border-[#4B4B4B]/30 cursor-pointer transition-colors hover:bg-[#1B255F]/30 ${
-                          selectedReceipt === item.receipt_url ? 'bg-[#4C6EBA]/10 border-l-2 border-l-[#4C6EBA]' : ''
+                        className={`border-slate-100 cursor-pointer transition-colors hover:bg-slate-50/50 ${
+                          selectedReceipt === item.receipt_url ? 'bg-slate-50 border-l-2 border-l-[#1B255F]' : ''
                         }`}
                       >
-                        <TableCell className="text-[#E5EAF7]/80 font-mono text-xs">
+                        <TableCell className="text-slate-700 font-mono text-xs">
                           {new Date(item.date).toLocaleDateString('de-CH')}
                         </TableCell>
-                        <TableCell className="text-[#E5EAF7]/80 text-xs font-medium">{item.category_name}</TableCell>
-                        <TableCell className="text-[#E5EAF7]/80 text-xs">{item.team || 'Allgemein'}</TableCell>
-                        <TableCell className="text-[#C0C0C0] text-xs truncate max-w-[120px]" title={item.purpose}>
+                        <TableCell className="text-slate-800 text-xs font-semibold">{item.category_name}</TableCell>
+                        <TableCell className="text-slate-700 text-xs">{item.team || 'Allgemein'}</TableCell>
+                        <TableCell className="text-slate-500 text-xs truncate max-w-[120px]" title={item.purpose}>
                           {item.purpose}
                         </TableCell>
-                        <TableCell className="text-right text-white font-mono text-xs font-semibold">
+                        <TableCell className="text-right text-slate-900 font-mono text-xs font-bold">
                           CHF {item.amount.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[#C0C0C0] hover:text-white"
+                            className="h-6 w-6 text-slate-400 hover:text-[#1B255F]"
                             title="Vorschau wechseln"
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -254,16 +256,16 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
 
         {/* Right column: Receipt Preview */}
         <div className="lg:col-span-5 space-y-4">
-          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
-            <CardHeader className="pb-3 border-b border-[#4B4B4B]/50">
-              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider flex items-center justify-between">
+          <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
+            <CardHeader className="pb-3 border-b border-slate-100">
+              <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
                 <span>Beleg-Vorschau</span>
                 {selectedReceipt && (
                   <a
                     href={selectedReceipt}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-[#4C6EBA] hover:text-[#E5EAF7] flex items-center gap-1 normal-case font-normal transition-colors"
+                    className="text-xs text-[#1B255F] hover:text-[#1B255F]/80 flex items-center gap-1 normal-case font-normal transition-colors"
                   >
                     Vollbild
                   </a>
@@ -272,7 +274,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
             </CardHeader>
             <CardContent className="pt-4">
               {selectedReceipt ? (
-                <div className="rounded-lg overflow-hidden border border-[#4B4B4B] bg-[#1B255F]/60 flex items-center justify-center min-h-[350px] max-h-[500px]">
+                <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center min-h-[350px] max-h-[500px]">
                   {isPdf ? (
                     <iframe
                       src={selectedReceipt}
@@ -289,8 +291,8 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-[#C0C0C0]/60">
-                  <Info className="h-8 w-8 text-[#4B4B4B] mb-2" />
+                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                  <Info className="h-8 w-8 text-slate-300 mb-2" />
                   <p className="text-xs">Kein Beleg ausgewählt.</p>
                 </div>
               )}
@@ -301,26 +303,26 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] rounded-xl shadow-2xl p-6">
+        <DialogContent className="border-slate-200 bg-white text-slate-900 rounded-xl shadow-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-bold text-[#E5EAF7] flex items-center gap-1.5">
+            <DialogTitle className="text-[17px] font-bold text-[#1B255F] flex items-center gap-1.5">
               <XCircle className="h-5 w-5 text-rose-500" />
               Spesenbericht ablehnen
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-[13px] text-[#C0C0C0]">
+            <p className="text-[13px] text-slate-500">
               Bitte gib eine Begründung für die Ablehnung an. Der Nutzer erhält diese Begründung per E-Mail.
             </p>
             <div className="space-y-1.5">
-              <label htmlFor="notes" className="text-[10px] font-bold text-[#C0C0C0] uppercase tracking-wider">Begründung</label>
+              <label htmlFor="notes" className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Begründung</label>
               <Textarea
                 id="notes"
                 placeholder="z.B. Beleg fehlt oder ist nicht lesbar..."
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows={4}
-                className="border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0]/50 focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
+                className="border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
               />
             </div>
           </div>
@@ -328,7 +330,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
             <Button
               variant="outline"
               onClick={() => setRejectDialogOpen(false)}
-              className="border-[#4B4B4B] hover:bg-[#1B255F] text-[#C0C0C0] hover:text-white"
+              className="border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-700 bg-white shadow-sm"
             >
               Abbrechen
             </Button>
@@ -338,7 +340,7 @@ export default function AdminReportDetail({ report }: { report: ReportDetails })
               className="bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-md"
             >
               {submitting === 'reject' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
               ) : (
                 'Jetzt ablehnen'
               )}

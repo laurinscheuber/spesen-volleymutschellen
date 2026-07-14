@@ -56,29 +56,29 @@ export default function CategoryList({ categories }: { categories: Category[] })
     <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
       {/* Left: Add category */}
       <div className="md:col-span-4 space-y-6">
-        <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
-          <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
-            <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider flex items-center gap-1.5">
-              <Plus className="h-4 w-4 text-[#4C6EBA]" />
+        <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Plus className="h-4 w-4 text-[#1B255F]" />
               Kategorie erstellen
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-1.5">
-                <label htmlFor="name" className="text-[10px] font-bold text-[#C0C0C0] uppercase tracking-wider">Bezeichnung</label>
+                <label htmlFor="name" className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Bezeichnung</label>
                 <Input
                   id="name"
                   placeholder="z.B. Trainerhonorar"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={loading}
-                  className="border-[#4B4B4B] bg-[#1B255F]/50 text-white placeholder-[#C0C0C0]/50 focus:border-[#4C6EBA] focus:ring-1 focus:ring-[#4C6EBA]"
+                  className="border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
                 />
               </div>
 
               {error && (
-                <div className="rounded-lg bg-destructive/10 p-3 text-[13px] text-destructive-foreground border border-destructive/20 flex items-center gap-1.5">
+                <div className="rounded-lg bg-red-50 p-3 text-[13px] text-red-800 border border-red-200 flex items-center gap-1.5">
                   <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -87,9 +87,9 @@ export default function CategoryList({ categories }: { categories: Category[] })
               <Button
                 type="submit"
                 disabled={loading || !name.trim()}
-                className="w-full bg-[#4C6EBA] hover:bg-[#4C6EBA]/90 text-white font-semibold text-xs h-9 transition-colors"
+                className="w-full bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-semibold text-xs h-9 transition-colors rounded-lg shadow-sm"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Kategorie anlegen'}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : 'Kategorie anlegen'}
               </Button>
             </form>
           </CardContent>
@@ -98,9 +98,9 @@ export default function CategoryList({ categories }: { categories: Category[] })
 
       {/* Right: Table */}
       <div className="md:col-span-8">
-        <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-lg">
-          <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
-            <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">
+        <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Bestehende Kategorien ({categories.length})
             </CardTitle>
           </CardHeader>
@@ -108,23 +108,23 @@ export default function CategoryList({ categories }: { categories: Category[] })
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
-                    <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Name</TableHead>
-                    <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="w-32 text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Aktionen</TableHead>
+                  <TableRow className="hover:bg-transparent border-slate-100">
+                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Name</TableHead>
+                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Status</TableHead>
+                    <TableHead className="w-32 text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {categories.map((category) => (
-                    <TableRow key={category.id} className="border-[#4B4B4B]/30 hover:bg-[#1B255F]/30 transition-colors">
-                      <TableCell className="text-[#E5EAF7] font-medium text-[13px]">
+                    <TableRow key={category.id} className="border-slate-100 hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="text-slate-800 font-medium text-[13px]">
                         {category.name}
                       </TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
                           category.is_active
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-[#4B4B4B]/20 text-[#C0C0C0] border-[#4B4B4B]'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-slate-100 text-slate-500 border-slate-200'
                         }`}>
                           {category.is_active ? 'Aktiv' : 'Inaktiv'}
                         </span>
@@ -137,8 +137,8 @@ export default function CategoryList({ categories }: { categories: Category[] })
                           onClick={() => handleToggle(category.id, category.is_active)}
                           className={`h-7 px-2 text-xs rounded-md gap-1 ${
                             category.is_active
-                              ? 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
-                              : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
+                              ? 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                              : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
                           }`}
                         >
                           {togglingId === category.id ? (

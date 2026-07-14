@@ -33,21 +33,21 @@ interface ExpenseItem {
 
 // Helper to get volleyball season range
 // The Swiss Volleyball season runs from autumn to spring.
-// The financial club year (Vereinsjahr) starts on June 1st and ends on May 31st.
+// The financial club year (Vereinsjahr) starts on May 1st and ends on April 30th.
 function getSeasonRange(offsetYear = 0): { start: string; end: string; label: string } {
   const now = new Date()
   let currentYear = now.getFullYear()
   
-  // If we are currently before June, the current season started in the previous calendar year
-  if (now.getMonth() < 5) { // 0-indexed: Jan (0) to May (4)
+  // If we are currently before May, the current season started in the previous calendar year
+  if (now.getMonth() < 4) { // 0-indexed: Jan (0) to Apr (3)
     currentYear -= 1
   }
   
   const targetYear = currentYear + offsetYear
   
   return {
-    start: `${targetYear}-06-01`,
-    end: `${targetYear + 1}-05-31`,
+    start: `${targetYear}-05-01`,
+    end: `${targetYear + 1}-04-30`,
     label: `Saison ${targetYear}/${targetYear + 1}`
   }
 }

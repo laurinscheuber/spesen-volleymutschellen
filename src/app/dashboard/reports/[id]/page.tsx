@@ -56,22 +56,29 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
     switch (status) {
       case 'ausbezahlt':
         return (
-          <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-[11px] font-bold">
-            <CheckCircle className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
             Ausbezahlt
+          </div>
+        )
+      case 'in_auftrag':
+        return (
+          <div className="flex items-center gap-1.5 text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <Info className="h-4 w-4 text-sky-600" />
+            Zahlung erfasst (In Auftrag)
           </div>
         )
       case 'abgelehnt':
         return (
-          <div className="flex items-center gap-1.5 text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg text-[11px] font-bold">
-            <XCircle className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <XCircle className="h-4 w-4 text-red-600" />
             Abgelehnt
           </div>
         )
       default:
         return (
-          <div className="flex items-center gap-1.5 text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg text-[11px] font-bold">
-            <Info className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg text-[11px] font-bold">
+            <Info className="h-4 w-4 text-amber-600" />
             Offen – Warte auf Freigabe
           </div>
         )

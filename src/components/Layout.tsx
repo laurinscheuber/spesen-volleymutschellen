@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { signOut } from '@/app/actions/auth'
-import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList } from 'lucide-react'
+import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface LayoutProps {
@@ -29,8 +29,9 @@ export default function AppLayout({ children, profile }: LayoutProps) {
 
   const links = isAdmin
     ? [
-        { href: '/admin', label: 'Offene Spesen', icon: ClipboardList },
-        { href: '/admin/categories', label: 'Kategorien', icon: Settings },
+        { href: '/admin', label: 'Spesenübersicht', icon: ClipboardList },
+        { href: '/admin/members', label: 'Mitglieder & IBANs', icon: Users },
+        { href: '/admin/categories', label: 'Kategorien', icon: Tags },
       ]
     : [] // No links in header for regular users
 

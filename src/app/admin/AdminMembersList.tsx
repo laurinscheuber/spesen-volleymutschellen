@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Search, Shield, Copy, Check, Loader2, AlertCircle, History, Eye } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatSwissDate } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -305,43 +305,45 @@ export default function AdminMembersList({
                 Dieses Mitglied hat noch keine Spesenberichte eingereicht.
               </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto border border-slate-100 rounded-xl">
-                <Table>
-                  <TableHeader className="bg-slate-50 sticky top-0 z-10">
-                    <TableRow className="hover:bg-transparent border-slate-100">
-                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider pl-4 py-3">Datum</TableHead>
-                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider py-3">Bericht ID</TableHead>
-                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider py-3">Betrag</TableHead>
-                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider py-3">Status</TableHead>
-                      <TableHead className="w-12 text-right pr-4 py-3" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {memberReports.map((report) => (
-                      <TableRow key={report.id} className="border-slate-100 hover:bg-slate-50/50">
-                        <TableCell className="text-slate-600 text-xs pl-4 py-3 font-mono">
-                          {new Date(report.created_at).toLocaleDateString('de-CH')}
-                        </TableCell>
-                        <TableCell className="text-slate-600 text-xs py-3 font-mono">
-                          {report.id.substring(0, 8)}...
-                        </TableCell>
-                        <TableCell className="text-slate-900 font-bold font-mono text-xs py-3">
-                          CHF {report.total.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="py-3">
-                          {getStatusBadge(report.status)}
-                        </TableCell>
-                        <TableCell className="text-right pr-4 py-3">
-                          <Link href={`/admin/reports/${report.id}`} onClick={() => setHistoryOpen(false)}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded">
-                              <Eye className="h-3.5 w-3.5" />
-                            </Button>
-                          </Link>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="border border-slate-100 rounded-xl overflow-hidden bg-white">
+                <div className="max-h-96 overflow-y-auto pr-1">
+                  <table className="w-full text-xs text-slate-700">
+                    <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-100">
+                      <tr>
+                        <th className="text-left text-slate-500 font-bold uppercase tracking-wider pl-4 py-3 text-[10px]">Datum</th>
+                        <th className="text-left text-slate-500 font-bold uppercase tracking-wider py-3 text-[10px]">Bericht ID</th>
+                        <th className="text-left text-slate-500 font-bold uppercase tracking-wider py-3 text-[10px]">Betrag</th>
+                        <th className="text-left text-slate-500 font-bold uppercase tracking-wider py-3 text-[10px]">Status</th>
+                        <th className="w-16 py-3 text-right pr-6"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {memberReports.map((report) => (
+                        <tr key={report.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="pl-4 py-3 font-mono text-slate-600">
+                            {formatSwissDate(report.created_at)}
+                          </td>
+                          <td className="py-3 font-mono text-slate-500">
+                            {report.id.substring(0, 8)}...
+                          </td>
+                          <td className="py-3 font-mono font-bold text-slate-900">
+                            CHF {report.total.toFixed(2)}
+                          </td>
+                          <td className="py-3">
+                            {getStatusBadge(report.status)}
+                          </td>
+                          <td className="py-3 text-right pr-6">
+                            <Link href={`/admin/reports/${report.id}`} onClick={() => setHistoryOpen(false)}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded">
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

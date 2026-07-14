@@ -49,15 +49,17 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'ausbezahlt': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-      case 'abgelehnt': return 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-      default: return 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+      case 'ausbezahlt': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      case 'in_auftrag': return 'bg-sky-50 text-sky-700 border-sky-200'
+      case 'abgelehnt': return 'bg-red-50 text-red-700 border-red-200'
+      default: return 'bg-amber-50 text-amber-700 border-amber-200'
     }
   }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'ausbezahlt': return 'Ausbezahlt'
+      case 'in_auftrag': return 'In Auftrag'
       case 'abgelehnt': return 'Abgelehnt'
       default: return 'Offen'
     }

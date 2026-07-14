@@ -121,6 +121,7 @@ export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
                     <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Eingereicht am</TableHead>
                     <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Mitglied</TableHead>
                     <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Posten</TableHead>
+                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Status</TableHead>
                     <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">IBAN</TableHead>
                     <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
                     <TableHead className="w-24" />
@@ -140,6 +141,16 @@ export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
                       </TableCell>
                       <TableCell className="text-slate-500 text-xs">
                         {report.itemsCount} {report.itemsCount === 1 ? 'Beleg' : 'Belege'}
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border",
+                          report.status === 'in_auftrag'
+                            ? "bg-sky-50 text-sky-700 border-sky-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        )}>
+                          {report.status === 'in_auftrag' ? 'In Auftrag' : 'Offen'}
+                        </span>
                       </TableCell>
                       <TableCell className="text-slate-700 font-mono text-[10.5px]">
                         {formatIban(report.iban)}

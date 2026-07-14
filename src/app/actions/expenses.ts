@@ -103,7 +103,7 @@ Volley Mutschellen Spesen-App`,
 
 export async function updateReportStatus(
   reportId: string,
-  status: 'ausbezahlt' | 'abgelehnt',
+  status: 'in_auftrag' | 'ausbezahlt' | 'abgelehnt',
   adminNotes?: string
 ) {
   const supabase = await createClient()
@@ -183,7 +183,20 @@ export async function updateReportStatus(
     year: 'numeric',
   })
 
-  if (status === 'ausbezahlt') {
+  if (status === 'in_auftrag') {
+    await sendEmail({
+      to: userProfile.email,
+      subject: 'Zahlungsauftrag für deine Spesen erfasst!',
+      text: `Hallo ${userProfile.full_name},
+
+Dein Spesenbericht vom ${createdDate} über CHF ${totalAmount} wurde geprüft und zur Auszahlung freigegeben.
+
+Die Überweisung wurde im E-Banking erfasst und sollte in Kürze auf deiner hinterlegten IBAN gutgeschrieben werden.
+
+Sportliche Grüsse,
+Volley Mutschellen Spesen-App`,
+    })
+  } else if (status === 'ausbezahlt') {
     await sendEmail({
       to: userProfile.email,
       subject: 'Dein Spesenbericht wurde ausbezahlt!',
@@ -218,6 +231,85 @@ Volley Mutschellen Spesen-App`,
   revalidatePath(`/admin/reports/${reportId}`)
   revalidatePath('/dashboard')
   return { success: true }
+}
+
+export async function promoteDelayedPayments() {
+  const supabase = await createClient()
+
+  // Fetch all reports in 'in_auftrag' updated > 24 hours ago (1 day delay)
+  const targetTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  
+  const { data: reports, error } = await supabase
+    .from('expense_reports')
+    .select(`
+      id,
+      created_at,
+      status,
+      user_id,
+      profiles (
+        full_name,
+        email,
+        iban
+      )
+    `)
+    .eq('status', 'in_auftrag')
+    .lt('updated_at', targetTime)
+
+  if (error || !reports || reports.length === 0) {
+    return { success: true, count: 0 }
+  }
+
+  let promotedCount = 0
+
+  for (const report of reports) {
+    const { data: items } = await supabase
+      .from('expense_items')
+      .select('amount')
+      .eq('report_id', report.id)
+
+    const totalAmount = (items || []).reduce((sum, item) => sum + Number(item.amount), 0).toFixed(2)
+
+    // Update report to 'ausbezahlt'
+    const { error: updateError } = await supabase
+      .from('expense_reports')
+      .update({
+        status: 'ausbezahlt',
+        paid_at: new Date().toISOString()
+      })
+      .eq('id', report.id)
+
+    if (!updateError) {
+      promotedCount++
+      
+      const userProfile = report.profiles as any
+      const createdDate = new Date(report.created_at).toLocaleDateString('de-CH', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+
+      // Send email
+      await sendEmail({
+        to: userProfile.email,
+        subject: 'Dein Spesenbericht wurde ausbezahlt!',
+        text: `Hallo ${userProfile.full_name},
+
+Dein Spesenbericht vom ${createdDate} über CHF ${totalAmount} wurde ausbezahlt.
+
+Die Überweisung erfolgt auf deine IBAN: ${userProfile.iban}
+
+Sportliche Grüsse,
+Volley Mutschellen Spesen-App`,
+      })
+    }
+  }
+
+  if (promotedCount > 0) {
+    revalidatePath('/admin')
+    revalidatePath('/dashboard')
+  }
+
+  return { success: true, count: promotedCount }
 }
 
 export async function deleteExpenseReport(reportId: string) {

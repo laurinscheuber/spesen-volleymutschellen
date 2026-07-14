@@ -83,10 +83,25 @@ export default function AppLayout({ children, profile }: LayoutProps) {
 
           {/* User info + Logout */}
           <div className="flex items-center space-x-3">
-            <div className="hidden md:flex flex-col text-right">
-              <span className="text-[13px] font-bold text-slate-800 leading-tight">{profile.full_name}</span>
-              <span className="text-[11px] text-slate-400 capitalize">{profile.role === 'admin' ? 'Kassier' : 'Mitglied'}</span>
-            </div>
+            <Link href="/profile" className="hidden md:flex flex-col text-right hover:opacity-80 group">
+              <span className="text-[13px] font-bold text-slate-800 leading-tight group-hover:text-[#1B255F] transition-colors">{profile.full_name}</span>
+              <span className="text-[11px] text-slate-400 capitalize flex items-center justify-end gap-1">
+                {profile.role === 'admin' ? 'Kassier' : 'Mitglied'}
+                <span className="text-[9px] text-[#1B255F]/60 font-medium opacity-0 group-hover:opacity-100 transition-opacity">Bearbeiten</span>
+              </span>
+            </Link>
+
+            <Link href="/profile">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 h-9 w-9 rounded-lg"
+                title="Profil & IBAN bearbeiten"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </Link>
+
             <Button
               variant="ghost"
               size="icon"

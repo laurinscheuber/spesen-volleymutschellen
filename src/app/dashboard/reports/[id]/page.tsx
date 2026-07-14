@@ -83,38 +83,38 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
       <div className="space-y-6 max-w-4xl mx-auto w-full">
         {/* Back */}
         <Link href="/dashboard">
-          <Button variant="ghost" className="text-[#C0C0C0] hover:text-white hover:bg-[#22307B]/50 pl-0 gap-1">
+          <Button variant="ghost" className="text-slate-500 hover:text-slate-700 hover:bg-slate-50 pl-0 gap-1">
             <ChevronLeft className="h-4 w-4" />
             Zurück zur Übersicht
           </Button>
         </Link>
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#4B4B4B]/50 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
           <div className="space-y-1">
-            <h1 className="text-2xl font-black uppercase tracking-wider text-[#E5EAF7] flex items-center gap-2">
-              <FileText className="h-6 w-6 text-[#4C6EBA]" />
+            <h1 className="text-2xl font-black uppercase tracking-wider text-[#1B255F] flex items-center gap-2">
+              <FileText className="h-6 w-6 text-[#1B255F]" />
               Spesenbericht Details
             </h1>
-            <p className="text-[11px] text-[#C0C0C0] font-mono">ID: {report.id}</p>
+            <p className="text-[11px] text-slate-400 font-mono">ID: {report.id}</p>
           </div>
           <div>{getStatusBadge(report.status)}</div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Metadata Card */}
-          <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md md:col-span-1">
-            <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
-              <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Abrechnungs-Info</CardTitle>
+          <Card className="border-slate-200 bg-white text-slate-900 shadow-md md:col-span-1 rounded-xl">
+            <CardHeader className="border-b border-slate-100 pb-4">
+              <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Abrechnungs-Info</CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-[#4C6EBA]/10 rounded-md border border-[#4C6EBA]/20">
-                  <Calendar className="h-3.5 w-3.5 text-[#4C6EBA]" />
+                <div className="p-1.5 bg-[#1B255F]/5 rounded-md border border-[#1B255F]/10">
+                  <Calendar className="h-3.5 w-3.5 text-[#1B255F]" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-[#C0C0C0]">Eingereicht am</p>
-                  <p className="text-[#E5EAF7] font-mono text-[13px]">
+                  <p className="text-[10px] text-slate-400">Eingereicht am</p>
+                  <p className="text-slate-700 font-mono text-[13px]">
                     {new Date(report.created_at).toLocaleDateString('de-CH', {
                       day: '2-digit', month: '2-digit', year: 'numeric',
                       hour: '2-digit', minute: '2-digit',
@@ -125,12 +125,12 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
 
               {report.paid_at && (
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-emerald-500/10 rounded-md border border-emerald-500/20">
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                  <div className="p-1.5 bg-emerald-50 rounded-md border border-emerald-100">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-[#C0C0C0]">Ausbezahlt am</p>
-                    <p className="text-[#E5EAF7] font-mono text-[13px]">
+                    <p className="text-[10px] text-slate-400">Ausbezahlt am</p>
+                    <p className="text-slate-700 font-mono text-[13px]">
                       {new Date(report.paid_at).toLocaleDateString('de-CH', {
                         day: '2-digit', month: '2-digit', year: 'numeric',
                       })}
@@ -139,9 +139,9 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
                 </div>
               )}
 
-              <div className="pt-3 border-t border-[#4B4B4B]/50">
-                <p className="text-[10px] text-[#C0C0C0] uppercase tracking-wider mb-1">Gesamtbetrag</p>
-                <p className="text-2xl font-bold text-white font-mono">CHF {totalAmount}</p>
+              <div className="pt-3 border-t border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Gesamtbetrag</p>
+                <p className="text-2xl font-bold text-slate-900 font-mono">CHF {totalAmount}</p>
               </div>
             </CardContent>
           </Card>
@@ -149,48 +149,48 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
           {/* Items & Notes */}
           <div className="md:col-span-2 space-y-6">
             {report.status === 'abgelehnt' && (
-              <Card className="border-rose-500/20 bg-rose-500/5 text-[#E5EAF7] shadow-sm">
+              <Card className="border-red-200 bg-red-50 text-red-800 shadow-sm rounded-xl">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-[13px] font-bold text-rose-400 flex items-center gap-1.5">
-                    <XCircle className="h-4 w-4" />
+                  <CardTitle className="text-[13px] font-bold text-red-800 flex items-center gap-1.5">
+                    <XCircle className="h-4 w-4 text-red-600" />
                     Begründung für die Ablehnung
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-[13px] whitespace-pre-wrap italic text-[#E5EAF7]/80">
+                  <p className="text-[13px] whitespace-pre-wrap italic text-red-800/90">
                     {report.admin_notes || 'Keine Begründung angegeben.'}
                   </p>
                 </CardContent>
               </Card>
             )}
 
-            <Card className="border-[#4B4B4B] bg-[#22307B] text-[#E5EAF7] shadow-md">
-              <CardHeader className="border-b border-[#4B4B4B]/50 pb-4">
-                <CardTitle className="text-[11px] font-bold text-[#C0C0C0] uppercase tracking-wider">Abrechnungsposten</CardTitle>
+            <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
+              <CardHeader className="border-b border-slate-100 pb-4">
+                <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Abrechnungsposten</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="hover:bg-transparent border-[#4B4B4B]/50">
-                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
-                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
-                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
-                        <TableHead className="text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
-                        <TableHead className="text-right text-[#C0C0C0] font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
+                      <TableRow className="hover:bg-transparent border-slate-100">
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
+                        <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
                         <TableHead className="w-28" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => (
-                        <TableRow key={item.id} className="border-[#4B4B4B]/30 hover:bg-[#1B255F]/30 transition-colors">
-                          <TableCell className="text-[#E5EAF7]/80 font-mono text-xs">
+                        <TableRow key={item.id} className="border-slate-100 hover:bg-slate-50/50 transition-colors">
+                          <TableCell className="text-slate-700 font-mono text-xs">
                             {new Date(item.date).toLocaleDateString('de-CH')}
                           </TableCell>
-                          <TableCell className="text-[#E5EAF7]/80 text-xs">{item.categories?.name}</TableCell>
-                          <TableCell className="text-[#E5EAF7]/80 text-xs">{item.team || 'Allgemein'}</TableCell>
-                          <TableCell className="text-[#C0C0C0] text-xs whitespace-pre-wrap">{item.purpose}</TableCell>
-                          <TableCell className="text-right text-white font-mono text-xs font-semibold">
+                          <TableCell className="text-slate-800 text-xs font-semibold">{item.categories?.name}</TableCell>
+                          <TableCell className="text-slate-700 text-xs">{item.team || 'Allgemein'}</TableCell>
+                          <TableCell className="text-slate-500 text-xs whitespace-pre-wrap">{item.purpose}</TableCell>
+                          <TableCell className="text-right text-slate-900 font-mono text-xs font-bold">
                             CHF {Number(item.amount).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right">

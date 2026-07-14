@@ -1,13 +1,21 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
+import Link from 'next/link'
 import { updateUserRole } from '@/app/actions/profile'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Search, Shield, Copy, Check, Loader2, AlertCircle } from 'lucide-react'
+import { Search, Shield, Copy, Check, Loader2, AlertCircle, History, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 
 interface MemberProfile {
   id: string
@@ -17,18 +25,38 @@ interface MemberProfile {
   role: 'user' | 'admin'
 }
 
+interface ReportItem {
+  id: string
+  created_at: string
+  status: string
+  user_id: string
+  total: number
+}
+
 function formatIban(iban: string): string {
   if (!iban) return '–'
   const clean = iban.replace(/\s/g, '')
   return clean.replace(/(.{4})/g, '$1 ').trim()
 }
 
-export default function AdminMembersList({ members, currentUserId }: { members: MemberProfile[]; currentUserId: string }) {
+export default function AdminMembersList({ 
+  members, 
+  reports,
+  currentUserId 
+}: { 
+  members: MemberProfile[]
+  reports: ReportItem[]
+  currentUserId: string 
+}) {
   const [searchQuery, setSearchQuery] = useState('')
   const [copiedIban, setCopiedIban] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [actionUserId, setActionUserId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Member History Modal State
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null)
 
   const handleCopyIban = (iban: string) => {
     navigator.clipboard.writeText(iban)
@@ -60,6 +88,11 @@ export default function AdminMembersList({ members, currentUserId }: { members: 
     })
   }
 
+  const handleOpenHistory = (member: MemberProfile) => {
+    setSelectedMember(member)
+    setHistoryOpen(true)
+  }
+
   const filteredMembers = members.filter((m) => {
     const search = searchQuery.toLowerCase()
     return (
@@ -68,6 +101,43 @@ export default function AdminMembersList({ members, currentUserId }: { members: 
       (m.iban && m.iban.toLowerCase().includes(search))
     )
   })
+
+  // Filtered reports list for the selected member
+  const memberReports = useMemo(() => {
+    if (!selectedMember) return []
+    return reports.filter((r) => r.user_id === selectedMember.id)
+  }, [reports, selectedMember])
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'ausbezahlt':
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border bg-emerald-50 text-emerald-800 border-emerald-200">
+            Ausbezahlt
+          </span>
+        )
+      case 'in_auftrag':
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border bg-sky-50 text-sky-800 border-sky-200">
+            Erfasst
+          </span>
+        )
+      case 'offen':
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border bg-amber-50 text-amber-800 border-amber-200">
+            Offen
+          </span>
+        )
+      case 'abgelehnt':
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border bg-rose-50 text-rose-800 border-rose-200">
+            Abgelehnt
+          </span>
+        )
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -109,7 +179,7 @@ export default function AdminMembersList({ members, currentUserId }: { members: 
                     <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider pl-6">Mitglied</TableHead>
                     <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Rolle</TableHead>
                     <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">IBAN</TableHead>
-                    <TableHead className="w-48 text-right pr-6" />
+                    <TableHead className="w-56 text-right pr-6" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -170,28 +240,41 @@ export default function AdminMembersList({ members, currentUserId }: { members: 
                           )}
                         </TableCell>
                         <TableCell className="text-right pr-6 py-4">
-                          {!isSelf && (
+                          <div className="flex items-center justify-end gap-1.5">
                             <Button
                               variant="ghost"
                               size="sm"
-                              disabled={isPending && actionUserId === member.id}
-                              onClick={() => handleToggleRole(member)}
-                              className={cn(
-                                "text-xs font-semibold h-8 rounded-md px-3",
-                                member.role === 'admin' 
-                                  ? "text-red-600 hover:text-red-700 hover:bg-red-50" 
-                                  : "text-[#1B255F] hover:text-[#1B255F] hover:bg-slate-50"
-                              )}
+                              onClick={() => handleOpenHistory(member)}
+                              className="text-xs font-semibold h-8 rounded-md px-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 gap-1 flex items-center"
+                              title="Spesenverlauf anzeigen"
                             >
-                              {isPending && actionUserId === member.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : member.role === 'admin' ? (
-                                'Rechte entziehen'
-                              ) : (
-                                'Zum Kassier ernennen'
-                              )}
+                              <History className="h-3.5 w-3.5" />
+                              <span>Verlauf</span>
                             </Button>
-                          )}
+
+                            {!isSelf && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={isPending && actionUserId === member.id}
+                                onClick={() => handleToggleRole(member)}
+                                className={cn(
+                                  "text-xs font-semibold h-8 rounded-md px-3",
+                                  member.role === 'admin' 
+                                    ? "text-red-600 hover:text-red-700 hover:bg-red-50" 
+                                    : "text-[#1B255F] hover:text-[#1B255F] hover:bg-slate-50"
+                                )}
+                              >
+                                {isPending && actionUserId === member.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : member.role === 'admin' ? (
+                                  'Rechte entziehen'
+                                ) : (
+                                  'Kassier ernennen'
+                                )}
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -202,6 +285,68 @@ export default function AdminMembersList({ members, currentUserId }: { members: 
           )}
         </CardContent>
       </Card>
+
+      {/* Member History Modal */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-2xl bg-white border border-slate-200 rounded-xl shadow-xl p-6 text-slate-900">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-[#1B255F] flex items-center gap-2">
+              <History className="h-5 w-5 text-[#1B255F]" />
+              Spesenverlauf: {selectedMember?.full_name}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 pt-1">
+              Gesamthistorie aller eingereichten Spesenberichte dieses Mitglieds.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {memberReports.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-xs">
+                Dieses Mitglied hat noch keine Spesenberichte eingereicht.
+              </div>
+            ) : (
+              <div className="max-h-96 overflow-y-auto border border-slate-100 rounded-xl">
+                <Table>
+                  <TableHeader className="bg-slate-50 sticky top-0 z-10">
+                    <TableRow className="hover:bg-transparent border-slate-100">
+                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider pl-4 py-3">Datum</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider py-3">Bericht ID</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider py-3">Betrag</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[10px] uppercase tracking-wider py-3">Status</TableHead>
+                      <TableHead className="w-12 text-right pr-4 py-3" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {memberReports.map((report) => (
+                      <TableRow key={report.id} className="border-slate-100 hover:bg-slate-50/50">
+                        <TableCell className="text-slate-600 text-xs pl-4 py-3 font-mono">
+                          {new Date(report.created_at).toLocaleDateString('de-CH')}
+                        </TableCell>
+                        <TableCell className="text-slate-600 text-xs py-3 font-mono">
+                          {report.id.substring(0, 8)}...
+                        </TableCell>
+                        <TableCell className="text-slate-900 font-bold font-mono text-xs py-3">
+                          CHF {report.total.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="py-3">
+                          {getStatusBadge(report.status)}
+                        </TableCell>
+                        <TableCell className="text-right pr-4 py-3">
+                          <Link href={`/admin/reports/${report.id}`} onClick={() => setHistoryOpen(false)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded">
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

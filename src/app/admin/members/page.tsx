@@ -34,6 +34,31 @@ export default async function AdminMembersPage() {
     role: m.role
   }))
 
+  // Fetch all reports to associate with member history
+  const { data: reports } = await supabase
+    .from('expense_reports')
+    .select(`
+      id,
+      created_at,
+      status,
+      user_id,
+      expense_items (
+        amount
+      )
+    `)
+    .order('created_at', { ascending: false })
+
+  const formattedReports = (reports || []).map((report: any) => {
+    const total = (report.expense_items || []).reduce((sum: number, item: any) => sum + Number(item.amount), 0)
+    return {
+      id: report.id,
+      created_at: report.created_at,
+      status: report.status,
+      user_id: report.user_id,
+      total
+    }
+  })
+
   return (
     <AppLayout profile={profile}>
       <div className="space-y-6 max-w-5xl mx-auto w-full">
@@ -44,6 +69,7 @@ export default async function AdminMembersPage() {
 
         <AdminMembersList
           members={formattedMembers}
+          reports={formattedReports}
           currentUserId={user.id}
         />
       </div>

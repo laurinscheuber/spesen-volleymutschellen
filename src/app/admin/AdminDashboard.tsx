@@ -66,7 +66,7 @@ export default function AdminDashboard({
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('pending') // Default to pending (offen + in_auftrag)
+  const [statusFilter, setStatusFilter] = useState<string>('all') // Default to all (Alle Abrechnungen)
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [teamFilter, setTeamFilter] = useState<string>('all')
   const [visibleCount, setVisibleCount] = useState(25)
@@ -106,7 +106,7 @@ export default function AdminDashboard({
 
   const handleResetFilters = () => {
     setSearchQuery('')
-    setStatusFilter('pending')
+    setStatusFilter('all')
     setCategoryFilter('all')
     setTeamFilter('all')
     setVisibleCount(25)

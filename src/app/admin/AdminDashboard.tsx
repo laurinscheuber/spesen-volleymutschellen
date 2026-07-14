@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Eye, Download, ClipboardList, Wallet, FileDown, MoreVertical, Play } from 'lucide-react'
+import { Eye, Download, ClipboardList, Wallet, FileDown, MoreVertical, Play, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -39,6 +40,8 @@ function formatIban(iban: string): string {
 }
 
 export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
+  const searchParams = useSearchParams()
+  const queueDone = searchParams.get('queue_done') === 'true'
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
@@ -53,6 +56,12 @@ export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
 
   return (
     <div className="space-y-6">
+      {queueDone && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 text-emerald-800 text-xs font-semibold shadow-sm">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          <span>Warteschlange beendet! Alle ausstehenden Spesen wurden erfolgreich geprüft.</span>
+        </div>
+      )}
       {/* Overview Stats & Quick Queue Action */}
       <Card className="border-slate-200 bg-white text-slate-900 shadow-md overflow-hidden relative rounded-xl">
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#1B255F]" />

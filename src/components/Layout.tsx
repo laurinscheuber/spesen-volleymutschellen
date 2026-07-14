@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { signOut } from '@/app/actions/auth'
-import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags, Search, BarChart3 } from 'lucide-react'
+import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags, Search, BarChart3, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ interface LayoutProps {
 export default function AppLayout({ children, profile }: LayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -45,7 +47,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo + Nav */}
           <div className="flex items-center space-x-6">
-            <Link href={isAdmin ? '/admin' : '/dashboard'} className="flex items-center space-x-2 group">
+            <Link href={isAdmin ? '/admin' : '/dashboard'} className="flex items-center space-x-2 group shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="https://volleymutschellen.ch/images/volley-logo-white.png" 
@@ -56,8 +58,8 @@ export default function AppLayout({ children, profile }: LayoutProps) {
 
             {links.length > 0 && (
               <>
-                <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-                <nav className="flex space-x-1">
+                <div className="h-5 w-px bg-slate-200 hidden lg:block" />
+                <nav className="hidden lg:flex space-x-1">
                   {links.map((link) => {
                     const Icon = link.icon
                     const isActive =
@@ -76,7 +78,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
                         }`}
                       >
                         <Icon className={`h-4 w-4 ${isActive ? 'text-[#1B255F]' : ''}`} />
-                        <span className="hidden sm:inline">{link.label}</span>
+                        <span>{link.label}</span>
                       </Link>
                     )
                   })}
@@ -86,8 +88,8 @@ export default function AppLayout({ children, profile }: LayoutProps) {
           </div>
 
           {/* User info + Logout */}
-          <div className="flex items-center space-x-2.5">
-            <Link href="/profile" className="hidden md:flex flex-col text-right hover:opacity-80 group">
+          <div className="flex items-center space-x-2">
+            <Link href="/profile" className="hidden md:flex flex-col text-right hover:opacity-80 group shrink-0">
               <span className="text-[13px] font-bold text-slate-800 leading-tight group-hover:text-[#1B255F] transition-colors">{profile.full_name}</span>
               <span className="text-[11px] text-slate-400 capitalize flex items-center justify-end gap-1">
                 {profile.role === 'admin' ? 'Kassier' : 'Mitglied'}
@@ -131,9 +133,51 @@ export default function AppLayout({ children, profile }: LayoutProps) {
             >
               <LogOut className="h-4 w-4" />
             </Button>
+
+            {links.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden text-slate-400 hover:text-slate-600 hover:bg-slate-50 h-9 w-9 rounded-lg"
+                title="Menü öffnen"
+              >
+                {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4.5 w-4.5" />}
+              </Button>
+            )}
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && links.length > 0 && (
+        <div className="lg:hidden border-b border-slate-200 bg-white shadow-inner py-3 px-4 space-y-1 sticky top-20 z-40">
+          {links.map((link) => {
+            const Icon = link.icon
+            const isActive =
+              pathname === link.href ||
+              (link.href !== '/dashboard' && link.href !== '/admin' && pathname.startsWith(link.href)) ||
+              (link.href === '/admin' && pathname === '/admin') ||
+              (link.href === '/dashboard' && pathname === '/dashboard')
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center space-x-2.5 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors",
+                  isActive
+                    ? "bg-slate-100 text-[#1B255F] border border-slate-200/50"
+                    : "text-slate-600 hover:text-[#1B255F] hover:bg-slate-50"
+                )}
+              >
+                <Icon className={cn("h-4 w-4", isActive ? "text-[#1B255F]" : "text-slate-400")} />
+                <span>{link.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      )}
 
       {/* Main */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { formatSwissDate, formatSwissDateShort } from '@/lib/utils'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -160,7 +161,7 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
       const [year, m] = month.split('-')
       // Format month as Short name (e.g. Jan 2026)
       const date = new Date(Number(year), Number(m) - 1, 1)
-      const label = date.toLocaleDateString('de-CH', { month: 'short', year: '2-digit' })
+      const label = formatSwissDateShort(date)
       return {
         month,
         label,
@@ -179,7 +180,7 @@ export default function AdminStatsDashboard({ initialItems }: { initialItems: Ex
         <CardHeader className="border-b border-slate-100 pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
             <Filter className="h-4 w-4 text-[#1B255F]" />
-            Spesen filtern
+            Spesen filtern {(startDate || endDate) && <span className="text-[10px] text-slate-400 font-mono tracking-normal normal-case ml-1">({formatSwissDate(startDate)} bis {formatSwissDate(endDate)})</span>}
           </CardTitle>
           {hasActiveFilters && (
             <Button

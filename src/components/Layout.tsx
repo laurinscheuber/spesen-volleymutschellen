@@ -38,7 +38,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col relative">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo + Nav */}
           <div className="flex items-center space-x-6">
             <Link href={isAdmin ? '/admin' : '/dashboard'} className="flex items-center space-x-2 group">
@@ -46,12 +46,8 @@ export default function AppLayout({ children, profile }: LayoutProps) {
               <img 
                 src="https://volleymutschellen.ch/images/volley-logo-white.png" 
                 alt="Volley Mutschellen Logo" 
-                className="h-9 w-auto logo-blue object-contain" 
+                className="h-14 w-auto logo-blue object-contain" 
               />
-              <span className="hidden sm:inline font-black uppercase tracking-wider text-[17px] text-[#1B255F]">
-                Volley Mutschellen
-              </span>
-              <span className="sm:hidden font-black uppercase tracking-wider text-[17px] text-[#1B255F]">VM</span>
             </Link>
 
             {links.length > 0 && (

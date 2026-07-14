@@ -267,7 +267,7 @@ export default function CategoryList({ categories }: { categories: Category[] })
                   Verschieben nach
                 </label>
                 {activeCategoriesForMerge.length > 0 ? (
-                  <Select value={mergeCategoryId} onValueChange={setMergeCategoryId}>
+                  <Select value={mergeCategoryId} onValueChange={(val) => setMergeCategoryId(val || '')}>
                     <SelectTrigger className="w-full border-slate-200 text-xs">
                       <SelectValue placeholder="Wähle eine Zielkategorie" />
                     </SelectTrigger>

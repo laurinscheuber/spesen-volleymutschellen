@@ -29,6 +29,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
 
   const links = isAdmin
     ? [
+        { href: '/dashboard', label: 'Meine Spesen', icon: FileText },
         { href: '/admin', label: 'Spesenübersicht', icon: ClipboardList },
         { href: '/admin/members', label: 'Mitglieder & IBANs', icon: Users },
         { href: '/admin/categories', label: 'Kategorien', icon: Tags },

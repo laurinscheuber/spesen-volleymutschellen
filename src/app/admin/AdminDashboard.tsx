@@ -6,8 +6,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Eye, Download, ClipboardList, Wallet, FileDown } from 'lucide-react'
+import { Eye, Download, ClipboardList, Wallet, FileDown, MoreVertical, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 interface OpenReport {
   id: string
@@ -26,6 +39,7 @@ function formatIban(iban: string): string {
 }
 
 export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [startDate, setStartDate] = useState(() => {
     const d = new Date()
     d.setMonth(d.getMonth() - 1)
@@ -38,32 +52,46 @@ export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
   const totalOpenAmount = reports.reduce((sum, r) => sum + r.total, 0)
 
   return (
-    <div className="space-y-8">
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-slate-200 bg-white text-slate-900 shadow-md overflow-hidden relative rounded-xl">
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#1B255F]" />
-          <CardContent className="pt-5 pb-5 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ausstehende Auszahlungen</span>
-              <p className="text-3xl font-bold text-slate-900 font-mono">CHF {totalOpenAmount.toFixed(2)}</p>
-              <p className="text-[11px] text-slate-400">{reports.length} offene Abrechnungsmappen</p>
-            </div>
+    <div className="space-y-6">
+      {/* Overview Stats & Quick Queue Action */}
+      <Card className="border-slate-200 bg-white text-slate-900 shadow-md overflow-hidden relative rounded-xl">
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#1B255F]" />
+        <CardContent className="pt-5 pb-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
             <div className="p-3 bg-[#1B255F]/5 text-[#1B255F] rounded-xl border border-[#1B255F]/10">
               <Wallet className="h-6 w-6" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Ausstehende Auszahlungen</span>
+              <p className="text-3xl font-black text-slate-900 font-mono leading-none pt-0.5">CHF {totalOpenAmount.toFixed(2)}</p>
+              <p className="text-[11px] text-slate-400">{reports.length} offene Abrechnungsmappen</p>
+            </div>
+          </div>
+          {reports.length > 0 && (
+            <Link href={`/admin/reports/${reports[0].id}?queue=true`}>
+              <Button className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-bold px-6 py-5 rounded-lg shadow-md gap-2 transition-all w-full sm:w-auto">
+                <Play className="h-4 w-4 fill-current text-white" />
+                Warteschlange starten
+              </Button>
+            </Link>
+          )}
+        </CardContent>
+      </Card>
 
-        <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
-          <CardHeader className="pb-3 border-b border-slate-100">
-            <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <FileDown className="h-4 w-4 text-[#1B255F]" />
+      {/* Webling CSV Export Dialog */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl shadow-xl p-6 text-slate-900">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-[#1B255F] flex items-center gap-2">
+              <FileDown className="h-5 w-5 text-[#1B255F]" />
               Webling Spesen-Export
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <p className="text-xs text-slate-500">
+              Wähle den Zeitraum für den Export der ausbezahlten Spesenberichte aus.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Von</label>
                 <Input
@@ -83,28 +111,54 @@ export default function AdminDashboard({ reports }: { reports: OpenReport[] }) {
                 />
               </div>
             </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setExportDialogOpen(false)}
+              className="text-xs border-slate-200 hover:bg-slate-50 h-9 rounded-lg"
+            >
+              Abbrechen
+            </Button>
             <a
               href={`/api/export-webling?start=${startDate}&end=${endDate}`}
+              onClick={() => setExportDialogOpen(false)}
               download
               className={cn(
                 buttonVariants({ variant: 'default' }),
-                'w-full bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-semibold text-xs h-9 transition-colors gap-2 flex items-center justify-center rounded-lg cursor-pointer shadow-sm'
+                'bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-semibold text-xs h-9 transition-colors gap-2 flex items-center justify-center rounded-lg cursor-pointer shadow-sm px-4'
               )}
             >
-              <Download className="h-4 w-4" />
-              Ausbezahlte Spesen exportieren (CSV)
+              <Download className="h-3.5 w-3.5" />
+              Herunterladen (CSV)
             </a>
-          </CardContent>
-        </Card>
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Open Reports Table */}
       <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
-        <CardHeader className="border-b border-slate-100 pb-4">
+        <CardHeader className="border-b border-slate-100 pb-4 flex flex-row justify-between items-center">
           <CardTitle className="text-[17px] font-bold flex items-center gap-2 text-[#1B255F]">
             <ClipboardList className="h-5 w-5 text-[#1B255F]" />
-            Offene Abrechnungen prüfen
+            Spesenübersicht
           </CardTitle>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg text-slate-700">
+              <DropdownMenuItem 
+                onClick={() => setExportDialogOpen(true)}
+                className="hover:bg-slate-50 text-xs font-semibold cursor-pointer py-2 px-3 gap-2 flex items-center"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Webling CSV-Export
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardHeader>
         <CardContent className="p-0">
           {reports.length === 0 ? (

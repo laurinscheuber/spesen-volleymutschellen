@@ -182,7 +182,7 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          {report.status === 'offen' && (
+                          {(report.status === 'offen' || report.status === 'abgelehnt') && (
                             <Button
                               variant="ghost"
                               size="icon"

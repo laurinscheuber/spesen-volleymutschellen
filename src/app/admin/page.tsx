@@ -17,8 +17,14 @@ export default async function AdminPage() {
     .eq('id', user?.id || '')
     .single()
 
-  // Fetch open and pending reports (FIFO order)
-  const { data: openReports } = await supabase
+  // Fetch all categories for filter dropdown
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .order('name')
+
+  // Fetch all reports (newest first)
+  const { data: allReports } = await supabase
     .from('expense_reports')
     .select(`
       id,
@@ -30,16 +36,27 @@ export default async function AdminPage() {
         iban
       ),
       expense_items (
-        amount
+        id,
+        amount,
+        purpose,
+        team,
+        categories (
+          name
+        )
       )
     `)
-    .in('status', ['offen', 'in_auftrag'])
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
 
-  const formattedReports = (openReports || []).map((report: any) => {
+  const formattedReports = (allReports || []).map((report: any) => {
     const total = (report.expense_items || []).reduce((sum: number, item: any) => sum + Number(item.amount), 0)
     const itemsCount = (report.expense_items || []).length
     const userProfile = report.profiles as any
+
+    // Gather all categories, purposes and teams for searchable index
+    const categoriesList = (report.expense_items || []).map((item: any) => item.categories?.name || '')
+    const purposesList = (report.expense_items || []).map((item: any) => item.purpose || '')
+    const teamsList = (report.expense_items || []).map((item: any) => item.team || '')
+
     return {
       id: report.id,
       created_at: report.created_at,
@@ -48,7 +65,11 @@ export default async function AdminPage() {
       user_email: userProfile?.email || '',
       iban: userProfile?.iban || '',
       total,
-      itemsCount
+      itemsCount,
+      // Metadata fields to make searching extremely easy in client component
+      categories: Array.from(new Set(categoriesList)) as string[],
+      purposes: Array.from(new Set(purposesList)) as string[],
+      teams: Array.from(new Set(teamsList)) as string[],
     }
   })
 
@@ -57,10 +78,13 @@ export default async function AdminPage() {
       <div className="space-y-6 max-w-5xl mx-auto w-full">
         <div className="flex flex-col gap-1 border-b border-slate-200 pb-4 mb-2">
           <h1 className="text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight">Kassier-Dashboard</h1>
-          <p className="text-[13px] text-slate-500">Übersicht aller ausstehenden Spesenberichte, Webling-Export und Spesen-Warteschlange.</p>
+          <p className="text-[13px] text-slate-500">Verwalte offene Abrechnungen, durchsuche alle Spesen und starte die Bearbeitungs-Warteschlange.</p>
         </div>
 
-        <AdminDashboard reports={formattedReports} />
+        <AdminDashboard 
+          reports={formattedReports} 
+          categories={categories || []} 
+        />
       </div>
     </AppLayout>
   )

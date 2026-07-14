@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { signOut } from '@/app/actions/auth'
 import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags, Search, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -31,7 +32,6 @@ export default function AppLayout({ children, profile }: LayoutProps) {
     ? [
         { href: '/dashboard', label: 'Meine Spesen', icon: FileText },
         { href: '/admin', label: 'Spesenübersicht', icon: ClipboardList },
-        { href: '/admin/archive', label: 'Archiv', icon: Search },
         { href: '/admin/stats', label: 'Statistiken', icon: BarChart3 },
         { href: '/admin/members', label: 'Mitglieder & IBANs', icon: Users },
         { href: '/admin/categories', label: 'Kategorien', icon: Tags },
@@ -86,7 +86,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
           </div>
 
           {/* User info + Logout */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2.5">
             <Link href="/profile" className="hidden md:flex flex-col text-right hover:opacity-80 group">
               <span className="text-[13px] font-bold text-slate-800 leading-tight group-hover:text-[#1B255F] transition-colors">{profile.full_name}</span>
               <span className="text-[11px] text-slate-400 capitalize flex items-center justify-end gap-1">
@@ -94,6 +94,22 @@ export default function AppLayout({ children, profile }: LayoutProps) {
                 <span className="text-[9px] text-[#1B255F]/60 font-medium opacity-0 group-hover:opacity-100 transition-opacity">Bearbeiten</span>
               </span>
             </Link>
+
+            {isAdmin && (
+              <Link href="/admin/archive">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-9 w-9 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50",
+                    pathname.startsWith('/admin/archive') && "text-[#1B255F] bg-slate-100 border border-slate-200/50"
+                  )}
+                  title="Spesenarchiv & Suche"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
 
             <Link href="/profile">
               <Button

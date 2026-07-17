@@ -3,7 +3,7 @@ import DashboardList from './DashboardList'
 import AppLayout from '@/components/Layout'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { PlusCircle } from 'lucide-react'
+import { PlusCircle, AlertCircle } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,6 +15,16 @@ export default async function DashboardPage() {
     .select('full_name, email, role')
     .eq('id', user?.id || '')
     .single()
+
+  // If user is admin, fetch the count of open reports from other users
+  let openReportsCount = 0
+  if (profile?.role === 'admin') {
+    const { count } = await supabase
+      .from('expense_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'offen')
+    openReportsCount = count || 0
+  }
 
   // Get user's reports with item counts & amounts
   const { data: reports } = await supabase
@@ -63,6 +73,27 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {openReportsCount > 0 && (
+          <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center space-x-3">
+              <div className="bg-amber-100 p-2 rounded-lg text-amber-800 shrink-0">
+                <AlertCircle className="h-5 w-5 animate-pulse" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-amber-900 text-sm">Ausstehende Spesenberichte</h3>
+                <p className="text-amber-700 text-xs leading-relaxed">
+                  Es gibt aktuell <strong>{openReportsCount} offene Spesenabrechnung{openReportsCount === 1 ? '' : 'en'}</strong> von Mitgliedern, die auf deine Prüfung und Auszahlung warten.
+                </p>
+              </div>
+            </div>
+            <Link href="/admin" className="shrink-0">
+              <Button size="sm" className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition-all">
+                Spesen prüfen →
+              </Button>
+            </Link>
+          </div>
+        )}
 
         <DashboardList reports={reportsWithTotals} />
       </div>

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { signOut } from '@/app/actions/auth'
-import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags, Search, BarChart3, Menu, X } from 'lucide-react'
+import { Volleyball, LogOut, FileText, PlusCircle, Settings, ClipboardList, Users, Tags, Search, BarChart3, Menu, X, Bell, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -21,6 +22,142 @@ export default function AppLayout({ children, profile }: LayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [activities, setActivities] = useState<any[]>([])
+  const [bellOpen, setBellOpen] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    // 1. Fetch pending reports count (for admin only)
+    const fetchPendingCount = async () => {
+      if (profile.role !== 'admin') return
+      
+      const { count, error } = await supabase
+        .from('expense_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'offen')
+
+      if (!error && count !== null) {
+        setPendingCount(count)
+      }
+    }
+
+    // 2. Fetch latest activities (last 5 reports)
+    const fetchActivities = async () => {
+      let query = supabase
+        .from('expense_reports')
+        .select(`
+          id,
+          created_at,
+          status,
+          user_id,
+          profiles (
+            full_name
+          ),
+          expense_items (
+            amount
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      // Regular users only see their own activities, admins see all
+      if (profile.role !== 'admin') {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          query = query.eq('user_id', user.id)
+        } else {
+          return
+        }
+      }
+
+      const { data, error } = await query
+
+      if (!error && data) {
+        const formatted = data.map((r: any) => {
+          const profileName = r.profiles?.full_name || 'Unbekannt'
+          const total = (r.expense_items || []).reduce((sum: number, item: any) => sum + Number(item.amount), 0)
+          
+          let description = ''
+          if (profile.role === 'admin') {
+            if (r.status === 'offen') {
+              description = `${profileName} hat einen neuen Spesenbericht über CHF ${total.toFixed(2)} eingereicht.`
+            } else if (r.status === 'in_auftrag') {
+              description = `Bericht von ${profileName} über CHF ${total.toFixed(2)} wurde freigegeben.`
+            } else if (r.status === 'ausbezahlt') {
+              description = `Bericht von ${profileName} über CHF ${total.toFixed(2)} wurde ausbezahlt.`
+            } else {
+              description = `Bericht von ${profileName} über CHF ${total.toFixed(2)} wurde abgelehnt.`
+            }
+          } else {
+            if (r.status === 'offen') {
+              description = `Du hast einen Spesenbericht über CHF ${total.toFixed(2)} eingereicht.`
+            } else if (r.status === 'in_auftrag') {
+              description = `Dein Bericht über CHF ${total.toFixed(2)} wurde freigegeben.`
+            } else if (r.status === 'ausbezahlt') {
+              description = `Dein Bericht über CHF ${total.toFixed(2)} wurde ausbezahlt.`
+            } else {
+              description = `Dein Bericht über CHF ${total.toFixed(2)} wurde abgelehnt.`
+            }
+          }
+
+          // Calculate time ago
+          const created = new Date(r.created_at)
+          const diffMs = new Date().getTime() - created.getTime()
+          const diffMins = Math.floor(diffMs / 60000)
+          const diffHours = Math.floor(diffMins / 60)
+          const diffDays = Math.floor(diffHours / 24)
+
+          let timeAgo = 'Gerade eben'
+          if (diffDays > 0) {
+            timeAgo = `vor ${diffDays} Tag${diffDays === 1 ? '' : 'en'}`
+          } else if (diffHours > 0) {
+            timeAgo = `vor ${diffHours} Std.`
+          } else if (diffMins > 0) {
+            timeAgo = `vor ${diffMins} Min.`
+          }
+
+          return {
+            id: r.id,
+            profileName,
+            status: r.status,
+            description,
+            timeAgo
+          }
+        })
+        setActivities(formatted)
+      }
+    }
+
+    fetchPendingCount()
+    fetchActivities()
+
+    // Real-time subscription
+    const subscription = supabase
+      .channel('expense_reports_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expense_reports' }, () => {
+        fetchPendingCount()
+        fetchActivities()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
+  }, [profile.role])
+
+  useEffect(() => {
+    if (!bellOpen) return
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('.bell-container')) {
+        setBellOpen(false)
+      }
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [bellOpen])
 
   const handleSignOut = async () => {
     await signOut()
@@ -91,6 +228,11 @@ export default function AppLayout({ children, profile }: LayoutProps) {
                       >
                         <Icon className={`h-4 w-4 ${isActive ? 'text-[#1B255F]' : ''}`} />
                         <span>{link.label}</span>
+                        {link.href === '/admin' && pendingCount > 0 && (
+                          <span className="ml-1 px-1.5 py-0.5 text-[9px] font-black bg-rose-600 text-white rounded-full leading-none min-w-4 text-center">
+                            {pendingCount}
+                          </span>
+                        )}
                       </Link>
                     )
                   })}
@@ -108,6 +250,84 @@ export default function AppLayout({ children, profile }: LayoutProps) {
                 <span className="text-[9px] text-[#1B255F]/60 font-medium opacity-0 group-hover:opacity-100 transition-opacity">Bearbeiten</span>
               </span>
             </Link>
+
+            {/* Notification Bell */}
+            <div className="relative bell-container hidden lg:block">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setBellOpen(!bellOpen)}
+                className={cn(
+                  "text-slate-400 hover:text-slate-600 hover:bg-slate-50 h-9 w-9 rounded-lg relative",
+                  bellOpen && "bg-slate-100 text-[#1B255F]"
+                )}
+                title="Aktivitäten & Benachrichtigungen"
+              >
+                <Bell className="h-4 w-4" />
+                {profile.role === 'admin' && pendingCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-600 ring-2 ring-white animate-pulse" />
+                )}
+              </Button>
+
+              {bellOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-2 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                    <span className="font-extrabold text-[11px] text-[#1B255F] uppercase tracking-wider">Aktivitäten</span>
+                    {profile.role === 'admin' && pendingCount > 0 && (
+                      <span className="bg-rose-50 text-rose-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {pendingCount} offen
+                      </span>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                    {activities.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-xs text-slate-400">Keine Aktivitäten</div>
+                    ) : (
+                      activities.map((act) => (
+                        <Link
+                          key={act.id}
+                          href={profile.role === 'admin' ? `/admin/reports/${act.id}` : `/dashboard/reports/${act.id}`}
+                          onClick={() => setBellOpen(false)}
+                          className="block px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="text-[11px] font-bold text-slate-700 leading-tight">
+                              {act.profileName}
+                            </span>
+                            <span className={cn(
+                              "text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider",
+                              act.status === 'offen' && "bg-amber-100 text-amber-800",
+                              act.status === 'in_auftrag' && "bg-blue-100 text-blue-800",
+                              act.status === 'ausbezahlt' && "bg-green-100 text-green-800",
+                              act.status === 'abgelehnt' && "bg-red-100 text-red-800"
+                            )}>
+                              {act.status === 'in_auftrag' ? 'freigegeben' : act.status}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                            {act.description}
+                          </p>
+                          <span className="text-[9px] text-slate-400 mt-1 block">
+                            {act.timeAgo}
+                          </span>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                  {profile.role === 'admin' && (
+                    <div className="px-4 pt-2 pb-1 border-t border-slate-100 text-center">
+                      <Link
+                        href="/admin"
+                        onClick={() => setBellOpen(false)}
+                        className="text-[11px] font-bold text-[#1B255F] hover:underline"
+                      >
+                        Alle Spesen anzeigen
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {isAdmin && (
               <Link href="/admin/archive" className="hidden lg:block">

@@ -3,13 +3,21 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { submitExpenseReport } from '@/app/actions/expenses'
+import { createMemberProfile } from '@/app/actions/profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Trash2, Plus, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react'
+import { Trash2, Plus, Loader2, ClipboardCheck, AlertCircle, UserPlus, Users } from 'lucide-react'
 import ReceiptUpload from './ReceiptUpload'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 
 interface Category {
   id: string
@@ -26,7 +34,22 @@ interface CartItem {
   team?: string
 }
 
-export default function ExpenseCart({ initialCategories }: { initialCategories: Category[] }) {
+interface Member {
+  id: string
+  full_name: string
+  email: string | null
+  iban: string
+}
+
+export default function ExpenseCart({ 
+  initialCategories,
+  members = [],
+  isAdmin = false
+}: { 
+  initialCategories: Category[]
+  members?: Member[]
+  isAdmin?: boolean
+}) {
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
@@ -41,6 +64,17 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+
+  // Admin / Submitting on behalf of others states
+  const [submitForOther, setSubmitForOther] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState('')
+  const [membersList, setMembersList] = useState<Member[]>(members)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [newMemberName, setNewMemberName] = useState('')
+  const [newMemberIban, setNewMemberIban] = useState('')
+  const [newMemberEmail, setNewMemberEmail] = useState('')
+  const [modalError, setModalError] = useState<string | null>(null)
+  const [savingNewMember, setSavingNewMember] = useState(false)
 
   const TEAMS = [
     'Damen 1', 'Damen 2', 'Damen 3', 'Damen Ü32',
@@ -87,15 +121,64 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
     setCartItems(cartItems.filter((_, i) => i !== index))
   }
 
+  const handleCreateNewMember = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setModalError(null)
+    
+    if (!newMemberName.trim()) {
+      setModalError('Bitte gib einen Namen ein.')
+      return
+    }
+    
+    const cleanIban = newMemberIban.replace(/\s+/g, '').toUpperCase()
+    if (cleanIban.length < 15) {
+      setModalError('Ungültiges IBAN-Format. Mindestens 15 Zeichen erforderlich.')
+      return
+    }
+
+    setSavingNewMember(true)
+    const result = await createMemberProfile({
+      fullName: newMemberName.trim(),
+      iban: cleanIban,
+      email: newMemberEmail.trim() || undefined
+    })
+
+    if (result.error) {
+      setModalError(result.error)
+      setSavingNewMember(false)
+    } else if (result.member) {
+      const addedMember = {
+        id: result.member.id,
+        full_name: result.member.full_name,
+        email: result.member.email,
+        iban: result.member.iban
+      }
+      setMembersList([...membersList, addedMember].sort((a, b) => a.full_name.localeCompare(b.full_name)))
+      setSelectedUserId(result.member.id)
+      
+      // Reset form and close modal
+      setNewMemberName('')
+      setNewMemberIban('')
+      setNewMemberEmail('')
+      setSavingNewMember(false)
+      setIsModalOpen(false)
+    }
+  }
+
   const handleFinalSubmit = async () => {
     if (cartItems.length === 0) {
       setError('Dein Warenkorb ist leer. Bitte füge mindestens eine Spesenposition hinzu.')
       return
     }
 
+    if (submitForOther && !selectedUserId) {
+      setError('Bitte wähle eine Person aus, für die diese Spesen erfasst werden.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
-    const result = await submitExpenseReport(cartItems)
+    const result = await submitExpenseReport(cartItems, submitForOther ? selectedUserId : undefined)
 
     if (result.error) {
       setError(result.error)
@@ -109,7 +192,80 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
   const totalAmount = cartItems.reduce((sum, item) => sum + item.amount, 0).toFixed(2)
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <div className="space-y-6">
+      {/* Admin Toggle Section */}
+      {isAdmin && (
+        <Card className="border-slate-200 bg-white text-slate-900 shadow-sm rounded-xl">
+          <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Spesen für eine andere Person erfassen</p>
+                <p className="text-xs text-slate-500">Erfasse Abrechnungen direkt für ein anderes Vereinsmitglied.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant={submitForOther ? 'default' : 'outline'}
+                onClick={() => {
+                  setSubmitForOther(!submitForOther)
+                  if (!submitForOther && membersList.length > 0 && !selectedUserId) {
+                    setSelectedUserId(membersList[0].id)
+                  }
+                }}
+                className={submitForOther 
+                  ? "bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-bold text-xs shadow-sm border-0" 
+                  : "border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold"
+                }
+              >
+                {submitForOther ? 'Für mich erfassen' : 'Für jemand anderen erfassen'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* If submitForOther is true, show User selector row */}
+      {submitForOther && isAdmin && (
+        <Card className="border-slate-200 bg-white text-slate-900 shadow-sm rounded-xl border-l-4 border-l-indigo-600 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CardContent className="p-5 flex flex-col sm:flex-row items-end sm:items-center justify-between gap-4">
+            <div className="w-full sm:max-w-md space-y-2">
+              <label htmlFor="member-select" className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Person auswählen</label>
+              <Select value={selectedUserId} onValueChange={(val) => setSelectedUserId(val || '')}>
+                <SelectTrigger id="member-select" className="w-full border-slate-200 bg-white text-slate-900 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]">
+                  <SelectValue placeholder="Mitglied wählen...">
+                    {membersList.find(m => m.id === selectedUserId) 
+                      ? `${membersList.find(m => m.id === selectedUserId)?.full_name} (${membersList.find(m => m.id === selectedUserId)?.email || 'Keine E-Mail'})`
+                      : 'Mitglied wählen...'
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="border-slate-200 bg-white text-slate-900 max-h-60 overflow-y-auto">
+                  {membersList.map((member) => (
+                    <SelectItem key={member.id} value={member.id} className="hover:bg-slate-50 focus:bg-slate-50 cursor-pointer text-slate-900">
+                      {member.full_name} {member.email ? `(${member.email})` : '(Keine E-Mail)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold shadow-sm transition-all text-xs flex items-center gap-1.5 shrink-0"
+            >
+              <UserPlus className="h-4 w-4 text-slate-600" />
+              <span>Neue Person hinzufügen</span>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       {/* Left: Form */}
       <div className="lg:col-span-5 space-y-6">
         <Card className="border-slate-200 bg-white text-slate-900 shadow-md rounded-xl">
@@ -324,6 +480,97 @@ export default function ExpenseCart({ initialCategories }: { initialCategories: 
           )}
         </Card>
       </div>
+    </div>
+
+    {/* New Member Dialog */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl shadow-xl p-6 text-slate-900">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-[#1B255F] flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-[#1B255F]" />
+              Neues Mitglied erfassen
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 pt-1">
+              Erstelle ein Profil für ein Vereinsmitglied, um Spesen für diese Person einzureichen. Die E-Mail ist optional.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateNewMember} className="space-y-4 pt-3">
+            <div className="space-y-2">
+              <label htmlFor="modal-name" className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Vor- & Nachname</label>
+              <Input
+                id="modal-name"
+                placeholder="z.B. Max Mustermann"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                disabled={savingNewMember}
+                className="border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="modal-iban" className="text-[10px] font-bold uppercase tracking-wider text-slate-600">IBAN</label>
+              <Input
+                id="modal-iban"
+                placeholder="CH93 0000 0000 0000 0000 0"
+                value={newMemberIban}
+                onChange={(e) => setNewMemberIban(e.target.value)}
+                disabled={savingNewMember}
+                className="border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="modal-email" className="text-[10px] font-bold uppercase tracking-wider text-slate-600">E-Mail (Optional)</label>
+              <Input
+                id="modal-email"
+                type="email"
+                placeholder="z.B. max@example.com"
+                value={newMemberEmail}
+                onChange={(e) => setNewMemberEmail(e.target.value)}
+                disabled={savingNewMember}
+                className="border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
+              />
+            </div>
+
+            {modalError && (
+              <div className="rounded-lg bg-red-50 p-3 text-[13px] text-red-800 border border-red-200 flex items-center gap-1.5">
+                <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setModalError(null)
+                }}
+                disabled={savingNewMember}
+                className="text-xs text-slate-500 hover:bg-slate-50 font-semibold"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingNewMember}
+                className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-bold text-xs px-4"
+              >
+                {savingNewMember ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Speichern...
+                  </>
+                ) : (
+                  'Speichern'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

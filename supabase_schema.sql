@@ -1,10 +1,14 @@
--- 1. Create Profiles Table (Linked to auth.users)
-CREATE TYPE public.user_role AS ENUM ('user', 'admin');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE public.user_role AS ENUM ('user', 'admin');
+  END IF;
+END$$;
 
 CREATE TABLE public.profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   full_name TEXT NOT NULL DEFAULT '',
-  email TEXT NOT NULL UNIQUE,
+  email TEXT UNIQUE,
   iban TEXT NOT NULL DEFAULT '',
   role public.user_role NOT NULL DEFAULT 'user',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -20,11 +24,17 @@ CREATE TABLE public.categories (
 );
 
 -- 3. Create Expense Reports Table
-CREATE TYPE public.report_status AS ENUM ('offen', 'in_auftrag', 'ausbezahlt', 'abgelehnt');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'report_status') THEN
+    CREATE TYPE public.report_status AS ENUM ('offen', 'in_auftrag', 'ausbezahlt', 'abgelehnt');
+  END IF;
+END$$;
+
 
 CREATE TABLE public.expense_reports (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
   status public.report_status NOT NULL DEFAULT 'offen',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   paid_at TIMESTAMPTZ,
@@ -60,20 +70,38 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 6. Trigger: Automatically Create Profile on Signup
+-- 6. Trigger: Create/Link Profile on Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  existing_profile_id UUID;
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, role)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    CASE 
-      WHEN NEW.email IN ('laurin.scheuber@volleymutschellen.ch', 'anna.schneiter@volleymutschellen.ch') THEN 'admin'::public.user_role
-      ELSE 'user'::public.user_role
-    END
-  );
+  -- Search for existing profile with the same email (case-insensitive)
+  SELECT id INTO existing_profile_id
+  FROM public.profiles
+  WHERE LOWER(email) = LOWER(NEW.email);
+
+  IF existing_profile_id IS NOT NULL THEN
+    -- Match found! Update the existing profile ID to match the new user ID.
+    -- This cascades to update expense_reports.user_id automatically!
+    UPDATE public.profiles
+    SET id = NEW.id,
+        full_name = COALESCE(NULLIF(NEW.raw_user_meta_data->>'full_name', ''), full_name),
+        updated_at = NOW()
+    WHERE id = existing_profile_id;
+  ELSE
+    -- No matching profile, insert a new one
+    INSERT INTO public.profiles (id, email, full_name, role)
+    VALUES (
+      NEW.id,
+      NEW.email,
+      COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+      CASE 
+        WHEN NEW.email IN ('laurin.scheuber@volleymutschellen.ch', 'anna.schneiter@volleymutschellen.ch') THEN 'admin'::public.user_role
+        ELSE 'user'::public.user_role
+      END
+    );
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -81,6 +109,19 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 6.1 Trigger: Clean up Profile on Auth User Deletion
+CREATE OR REPLACE FUNCTION public.handle_deleted_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  DELETE FROM public.profiles WHERE id = OLD.id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_deleted
+  AFTER DELETE ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_deleted_user();
 
 -- 7. Trigger: Protect Profile Role from Non-Admins
 CREATE OR REPLACE FUNCTION public.handle_profile_update()
@@ -236,6 +277,14 @@ CREATE POLICY "Profiles can be updated by owner or admin"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id OR public.is_admin());
 
+CREATE POLICY "Profiles can be inserted by admin"
+  ON public.profiles FOR INSERT
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY "Profiles can be inserted by owner"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 -- Categories Policies
 CREATE POLICY "Categories are readable by authenticated users"
   ON public.categories FOR SELECT
@@ -251,9 +300,9 @@ CREATE POLICY "Reports are viewable by owner or admin"
   ON public.expense_reports FOR SELECT
   USING (auth.uid() = user_id OR public.is_admin());
 
-CREATE POLICY "Reports can be inserted by owner"
+CREATE POLICY "Reports can be inserted by owner or admin"
   ON public.expense_reports FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id OR public.is_admin());
 
 CREATE POLICY "Reports can be updated by owner or admin"
   ON public.expense_reports FOR UPDATE
@@ -316,9 +365,11 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('receipts', 'receipts', true)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Allow authenticated uploads to receipts" ON storage.objects;
 CREATE POLICY "Allow authenticated uploads to receipts" ON storage.objects
   FOR INSERT TO authenticated WITH CHECK (bucket_id = 'receipts');
 
+DROP POLICY IF EXISTS "Allow public reads of receipts" ON storage.objects;
 CREATE POLICY "Allow public reads of receipts" ON storage.objects
   FOR SELECT TO public USING (bucket_id = 'receipts');
 

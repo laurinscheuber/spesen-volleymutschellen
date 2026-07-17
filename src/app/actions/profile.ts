@@ -29,16 +29,18 @@ export async function updateProfile(formData: FormData) {
     return { error: 'Nicht authentifiziert.' }
   }
 
-  // Update profiles table. 
-  // RLS will allow users to edit their own profile.
+  // Upsert profiles table.
+  // Using upsert ensures that if the profile row is missing (e.g. after a DB reset),
+  // it gets created.
   const { error } = await supabase
     .from('profiles')
-    .update({
+    .upsert({
+      id: user.id,
       full_name: fullName.trim(),
       iban: cleanIban,
+      email: user.email || '',
       updated_at: new Date().toISOString()
     })
-    .eq('id', user.id)
 
   if (error) {
     console.error('Update profile error:', error)
@@ -85,4 +87,62 @@ export async function updateUserRole(userId: string, newRole: 'user' | 'admin') 
   revalidatePath('/admin')
   revalidatePath('/', 'layout')
   return { success: true }
+}
+
+export async function createMemberProfile(formData: {
+  fullName: string
+  iban: string
+  email?: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Nicht authentifiziert.' }
+  }
+
+  // Check admin status
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!callerProfile || callerProfile.role !== 'admin') {
+    return { error: 'Keine Administrator-Rechte.' }
+  }
+
+  if (!formData.fullName || !formData.fullName.trim()) {
+    return { error: 'Vollständiger Name ist erforderlich.' }
+  }
+
+  const cleanIban = formData.iban.replace(/\s+/g, '').toUpperCase()
+  if (cleanIban.length < 15) {
+    return { error: 'Ungültiges IBAN-Format. Mindestens 15 Zeichen erforderlich.' }
+  }
+
+  const email = formData.email?.trim() || null
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({
+      full_name: formData.fullName.trim(),
+      iban: cleanIban,
+      email: email,
+      role: 'user'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Create member profile error:', error)
+    if (error.code === '23505') {
+      return { error: 'Ein Mitglied mit dieser E-Mail-Adresse existiert bereits.' }
+    }
+    return { error: 'Fehler beim Erstellen des Mitglieds: ' + error.message }
+  }
+
+  revalidatePath('/admin/members')
+  revalidatePath('/dashboard/new')
+  return { success: true, member: data }
 }

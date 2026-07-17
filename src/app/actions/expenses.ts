@@ -13,7 +13,8 @@ export async function submitExpenseReport(
     category_id: string
     receipt_url: string
     team?: string
-  }>
+  }>,
+  targetUserId?: string
 ) {
   if (!items || items.length === 0) {
     return { error: 'Der Spesenbericht muss mindestens eine Position enthalten.' }
@@ -26,22 +27,43 @@ export async function submitExpenseReport(
     return { error: 'Nicht authentifiziert.' }
   }
 
-  // Fetch user profile to get their name and email
-  const { data: profile } = await supabase
+  // Fetch current user profile
+  const { data: currentUserProfile } = await supabase
     .from('profiles')
-    .select('full_name, email')
+    .select('full_name, email, role')
     .eq('id', user.id)
     .single()
 
-  if (!profile) {
+  if (!currentUserProfile) {
     return { error: 'Profil nicht gefunden.' }
+  }
+
+  let finalUserId = user.id
+  let profile = currentUserProfile
+
+  if (targetUserId && targetUserId !== user.id) {
+    if (currentUserProfile.role !== 'admin') {
+      return { error: 'Keine Berechtigung, Spesen für andere Personen zu erfassen.' }
+    }
+    // Fetch target user profile
+    const { data: targetProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', targetUserId)
+      .single()
+
+    if (!targetProfile) {
+      return { error: 'Profil der ausgewählten Person nicht gefunden.' }
+    }
+    finalUserId = targetUserId
+    profile = targetProfile as any
   }
 
   // 1. Insert report
   const { data: report, error: reportError } = await supabase
     .from('expense_reports')
     .insert({
-      user_id: user.id,
+      user_id: finalUserId,
       status: 'offen',
     })
     .select()
@@ -85,7 +107,7 @@ export async function submitExpenseReport(
     subject: `Neuer Spesenbericht von ${profile.full_name}`,
     text: `Hallo Kassier,
 
-${profile.full_name} (${profile.email}) hat einen neuen Spesenbericht eingereicht.
+${profile.full_name} (${profile.email || 'Keine E-Mail'}) hat einen neuen Spesenbericht eingereicht.
 
 Gesamtbetrag: CHF ${totalAmount}
 Anzahl Posten: ${items.length}
@@ -183,11 +205,12 @@ export async function updateReportStatus(
     year: 'numeric',
   })
 
-  if (status === 'in_auftrag') {
-    await sendEmail({
-      to: userProfile.email,
-      subject: 'Zahlungsauftrag für deine Spesen erfasst!',
-      text: `Hallo ${userProfile.full_name},
+  if (userProfile.email) {
+    if (status === 'in_auftrag') {
+      await sendEmail({
+        to: userProfile.email,
+        subject: 'Zahlungsauftrag für deine Spesen erfasst!',
+        text: `Hallo ${userProfile.full_name},
 
 Dein Spesenbericht vom ${createdDate} über CHF ${totalAmount} wurde geprüft und zur Auszahlung freigegeben.
 
@@ -195,12 +218,12 @@ Die Überweisung wurde im E-Banking erfasst und sollte in Kürze auf deiner hint
 
 Sportliche Grüsse,
 Volley Mutschellen Spesen-App`,
-    })
-  } else if (status === 'ausbezahlt') {
-    await sendEmail({
-      to: userProfile.email,
-      subject: 'Dein Spesenbericht wurde ausbezahlt!',
-      text: `Hallo ${userProfile.full_name},
+      })
+    } else if (status === 'ausbezahlt') {
+      await sendEmail({
+        to: userProfile.email,
+        subject: 'Dein Spesenbericht wurde ausbezahlt!',
+        text: `Hallo ${userProfile.full_name},
 
 Dein Spesenbericht vom ${createdDate} über CHF ${totalAmount} wurde vom Kassier genehmigt und ausbezahlt.
 
@@ -208,13 +231,13 @@ Die Überweisung erfolgt auf deine IBAN: ${userProfile.iban}
 
 Sportliche Grüsse,
 Volley Mutschellen Spesen-App`,
-    })
-  } else {
-    const reportUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://spesen.volleymutschellen.ch'}/dashboard/reports/${reportId}`
-    await sendEmail({
-      to: userProfile.email,
-      subject: 'Dein Spesenbericht wurde abgelehnt',
-      text: `Hallo ${userProfile.full_name},
+      })
+    } else {
+      const reportUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://spesen.volleymutschellen.ch'}/dashboard/reports/${reportId}`
+      await sendEmail({
+        to: userProfile.email,
+        subject: 'Dein Spesenbericht wurde abgelehnt',
+        text: `Hallo ${userProfile.full_name},
 
 Dein Spesenbericht vom ${createdDate} über CHF ${totalAmount} wurde leider abgelehnt.
 
@@ -226,7 +249,8 @@ ${reportUrl}
 
 Sportliche Grüsse,
 Volley Mutschellen Spesen-App`,
-    })
+      })
+    }
   }
 
   revalidatePath('/admin')
@@ -291,10 +315,11 @@ export async function promoteDelayedPayments() {
       })
 
       // Send email
-      await sendEmail({
-        to: userProfile.email,
-        subject: 'Dein Spesenbericht wurde ausbezahlt!',
-        text: `Hallo ${userProfile.full_name},
+      if (userProfile.email) {
+        await sendEmail({
+          to: userProfile.email,
+          subject: 'Dein Spesenbericht wurde ausbezahlt!',
+          text: `Hallo ${userProfile.full_name},
 
 Dein Spesenbericht vom ${createdDate} über CHF ${totalAmount} wurde ausbezahlt.
 
@@ -302,7 +327,8 @@ Die Überweisung erfolgt auf deine IBAN: ${userProfile.iban}
 
 Sportliche Grüsse,
 Volley Mutschellen Spesen-App`,
-      })
+        })
+      }
     }
   }
 

@@ -16,9 +16,25 @@ export default async function NewExpensePage() {
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, email, role')
+    .select('id, full_name, email, role')
     .eq('id', user?.id || '')
     .single()
+
+  // Fetch all user profiles for member selection (if admin)
+  let members: Array<{ id: string; full_name: string; email: string | null; iban: string }> = []
+  if (profile?.role === 'admin') {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, iban')
+      .order('full_name', { ascending: true })
+    
+    members = (data || []).map((m: any) => ({
+      id: m.id,
+      full_name: m.full_name || '',
+      email: m.email || null,
+      iban: m.iban || ''
+    }))
+  }
 
   return (
     <AppLayout profile={profile || { full_name: 'Nutzer', email: '', role: 'user' }}>
@@ -28,7 +44,11 @@ export default async function NewExpensePage() {
           <p className="text-[13px] text-slate-500">Erstelle eine neue Sammelabrechnung und füge deine Belege hinzu.</p>
         </div>
 
-        <ExpenseCart initialCategories={categories || []} />
+        <ExpenseCart 
+          initialCategories={categories || []} 
+          members={members}
+          isAdmin={profile?.role === 'admin'}
+        />
       </div>
     </AppLayout>
   )

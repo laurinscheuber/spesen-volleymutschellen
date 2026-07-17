@@ -112,7 +112,7 @@
 }
 
 .logo-blue {
-  filter: brightness(0) saturate(100%) invert(13%) sepia(85%) saturate(2462%) hue-rotate(227deg) brightness(95%) contrast(104%);
+  filter: brightness(0) saturate(100%) invert(97%) sepia(16%) saturate(2429%) hue-rotate(194deg) brightness(18%) contrast(109%);
 }
 
 /* Subtle diamond/net pattern in light grey */

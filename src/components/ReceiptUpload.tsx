@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import imageCompression from 'browser-image-compression'
 import { Camera, FileUp, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -18,10 +18,10 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
   const [error, setError] = useState<string | null>(null)
   const [uploaded, setUploaded] = useState(false)
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const processAndUploadFile = async (file: File) => {
     setError(null)
     setUploaded(false)
     setFileName(file.name)
@@ -73,54 +73,90 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
     }
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      processAndUploadFile(file)
+    }
+  }
+
   const isbusy = compressing || uploading
 
   return (
     <div className="space-y-2">
-      <label className={`flex flex-col items-center justify-center border border-dashed rounded-xl p-5 cursor-pointer transition-colors ${
-        disabled || isbusy
-          ? 'bg-slate-50 border-slate-200 pointer-events-none opacity-60'
-          : uploaded
-          ? 'border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/10'
-          : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
-      }`}>
-        <input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={handleFileChange}
-          disabled={disabled || isbusy}
-          className="hidden"
-          capture="environment"
-        />
-        <div className="flex flex-col items-center text-center space-y-1.5">
+      {/* Hidden File Inputs */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        disabled={disabled || isbusy}
+        className="hidden"
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        onChange={handleFileChange}
+        disabled={disabled || isbusy}
+        className="hidden"
+      />
+
+      <div
+        className={`flex flex-col items-center justify-center border border-dashed rounded-xl p-4 transition-colors ${
+          disabled || isbusy
+            ? 'bg-slate-50 border-slate-200 opacity-60'
+            : uploaded
+            ? 'border-emerald-500/40 bg-emerald-500/5'
+            : 'border-slate-200 bg-slate-50'
+        }`}
+      >
+        <div className="flex flex-col items-center text-center space-y-2 w-full">
           {compressing ? (
-            <>
+            <div className="py-2 flex flex-col items-center gap-1.5">
               <Loader2 className="h-6 w-6 animate-spin text-[#1B255F]" />
-              <span className="text-xs text-slate-500">Komprimiere Bild...</span>
-            </>
+              <span className="text-xs text-slate-500 font-medium">Komprimiere Bild...</span>
+            </div>
           ) : uploading ? (
-            <>
+            <div className="py-2 flex flex-col items-center gap-1.5">
               <Loader2 className="h-6 w-6 animate-spin text-[#1B255F]" />
-              <span className="text-xs text-slate-500">Lade hoch...</span>
-            </>
+              <span className="text-xs text-slate-500 font-medium">Lade hoch...</span>
+            </div>
           ) : uploaded ? (
-            <>
+            <div className="py-1 flex flex-col items-center gap-1">
               <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-              <span className="text-xs text-emerald-500 font-semibold">Beleg hochgeladen</span>
-              <span className="text-[10px] text-slate-500 truncate max-w-[200px]">{fileName}</span>
-            </>
+              <span className="text-xs text-emerald-600 font-bold">Beleg hochgeladen</span>
+              <span className="text-[10px] text-slate-500 truncate max-w-[220px]">{fileName}</span>
+            </div>
           ) : (
-            <>
-              <div className="flex gap-2 text-[#1B255F]">
-                <Camera className="h-5 w-5" />
-                <FileUp className="h-5 w-5" />
+            <div className="w-full space-y-2">
+              <span className="text-xs font-semibold text-slate-700 block">Beleg hochladen oder fotografieren</span>
+              <div className="grid grid-cols-2 gap-2 w-full">
+                <button
+                  type="button"
+                  disabled={disabled || isbusy}
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-[#1B255F] font-bold text-xs py-2 px-3 rounded-lg shadow-sm transition-all cursor-pointer"
+                >
+                  <Camera className="h-4 w-4 text-[#1B255F]" />
+                  <span>Kamera</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={disabled || isbusy}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-700 font-bold text-xs py-2 px-3 rounded-lg shadow-sm transition-all cursor-pointer"
+                >
+                  <FileUp className="h-4 w-4 text-slate-500" />
+                  <span>Datei / PDF</span>
+                </button>
               </div>
-              <span className="text-xs font-semibold text-slate-700">Foto aufnehmen oder Datei hochladen</span>
-              <span className="text-[10px] text-slate-400">Bilder & PDFs akzeptiert</span>
-            </>
+              <span className="text-[10px] text-slate-400 block pt-0.5">Fotos & PDFs werden automatisch optimiert</span>
+            </div>
           )}
         </div>
-      </label>
+      </div>
 
       {error && (
         <div className="flex items-center gap-1.5 text-xs text-red-800 bg-red-50 border border-red-200 rounded-lg p-2.5">

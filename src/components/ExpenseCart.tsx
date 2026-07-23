@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { submitExpenseReport } from '@/app/actions/expenses'
-import { createMemberProfile } from '@/app/actions/profile'
+import { createMemberProfile, updateProfile } from '@/app/actions/profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Trash2, Plus, Loader2, ClipboardCheck, AlertCircle, UserPlus, Users } from 'lucide-react'
+import { Trash2, Plus, Loader2, ClipboardCheck, AlertCircle, UserPlus, Users, User, CreditCard } from 'lucide-react'
 import ReceiptUpload from './ReceiptUpload'
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
 
 interface Category {
@@ -41,17 +42,37 @@ interface Member {
   iban: string
 }
 
+interface UserProfile {
+  id: string
+  full_name: string
+  email: string
+  iban: string
+}
+
 export default function ExpenseCart({ 
   initialCategories,
   members = [],
-  isAdmin = false
+  isAdmin = false,
+  currentUserProfile
 }: { 
   initialCategories: Category[]
   members?: Member[]
   isAdmin?: boolean
+  currentUserProfile?: UserProfile
 }) {
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+
+  const [userProfile, setUserProfile] = useState<UserProfile>(
+    currentUserProfile || { id: '', full_name: '', email: '', iban: '' }
+  )
+
+  // Profile Completion Modal states (when submitting for self with missing IBAN)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [profileName, setProfileName] = useState('')
+  const [profileIban, setProfileIban] = useState('')
+  const [profileModalError, setProfileModalError] = useState<string | null>(null)
+  const [savingProfile, setSavingProfile] = useState(false)
 
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -165,6 +186,79 @@ export default function ExpenseCart({
     }
   }
 
+  const formatIBAN = (value: string) => {
+    const raw = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+    const parts = []
+    for (let i = 0; i < raw.length; i += 4) {
+      parts.push(raw.substring(i, i + 4))
+    }
+    return parts.join(' ')
+  }
+
+  const handlePreSubmitCheck = () => {
+    if (cartItems.length === 0) {
+      setError('Dein Warenkorb ist leer. Bitte füge mindestens eine Spesenposition hinzu.')
+      return
+    }
+
+    if (submitForOther) {
+      if (!selectedUserId) {
+        setError('Bitte wähle eine Person aus, für die diese Spesen erfasst werden.')
+        return
+      }
+      handleFinalSubmit()
+    } else {
+      const cleanIban = userProfile.iban.replace(/\s+/g, '')
+      const hasIban = cleanIban.length >= 15
+      const hasName = userProfile.full_name && userProfile.full_name.trim().length > 0
+
+      if (!hasIban || !hasName) {
+        setProfileName(userProfile.full_name || '')
+        setProfileIban(formatIBAN(userProfile.iban || ''))
+        setProfileModalError(null)
+        setIsProfileModalOpen(true)
+      } else {
+        handleFinalSubmit()
+      }
+    }
+  }
+
+  const handleSaveProfileAndSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProfileModalError(null)
+
+    if (!profileName.trim()) {
+      setProfileModalError('Bitte gib deinen vollständigen Namen an.')
+      return
+    }
+
+    const cleanIban = profileIban.replace(/\s+/g, '').toUpperCase()
+    if (cleanIban.length < 15) {
+      setProfileModalError('Ungültiges IBAN-Format. Mindestens 15 Zeichen erforderlich.')
+      return
+    }
+
+    setSavingProfile(true)
+    const formData = new FormData()
+    formData.append('fullName', profileName.trim())
+    formData.append('iban', cleanIban)
+
+    const res = await updateProfile(formData)
+    setSavingProfile(false)
+
+    if (res.error) {
+      setProfileModalError(res.error)
+    } else {
+      setUserProfile({
+        ...userProfile,
+        full_name: profileName.trim(),
+        iban: cleanIban,
+      })
+      setIsProfileModalOpen(false)
+      handleFinalSubmit()
+    }
+  }
+
   const handleFinalSubmit = async () => {
     if (cartItems.length === 0) {
       setError('Dein Warenkorb ist leer. Bitte füge mindestens eine Spesenposition hinzu.')
@@ -192,7 +286,8 @@ export default function ExpenseCart({
   const totalAmount = cartItems.reduce((sum, item) => sum + item.amount, 0).toFixed(2)
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {/* Admin Toggle Section */}
       {isAdmin && (
         <Card className="border-slate-200 bg-white text-slate-900 shadow-sm rounded-xl">
@@ -411,25 +506,25 @@ export default function ExpenseCart({
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent border-slate-100">
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
-                        <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
-                        <TableHead className="w-12" />
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider pl-6 py-4">Datum</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Kategorie</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Team</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Zweck</TableHead>
+                        <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Betrag</TableHead>
+                        <TableHead className="w-12 pr-6 py-4 text-right" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {cartItems.map((item, index) => (
                         <TableRow key={index} className="border-slate-100 hover:bg-slate-50/50 group transition-colors">
-                          <TableCell className="text-slate-700 font-mono text-xs">
+                          <TableCell className="text-slate-700 font-mono text-xs pl-6 py-4">
                             {new Date(item.date).toLocaleDateString('de-CH')}
                           </TableCell>
-                          <TableCell className="text-slate-700 text-xs font-medium">{item.category_name}</TableCell>
-                          <TableCell className="text-slate-700 text-xs">{item.team || 'Allgemein'}</TableCell>
-                          <TableCell className="text-slate-500 text-xs truncate max-w-[120px]" title={item.purpose}>{item.purpose}</TableCell>
-                          <TableCell className="text-right text-slate-900 font-mono text-xs font-bold">CHF {item.amount.toFixed(2)}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-slate-700 text-xs font-medium py-4">{item.category_name}</TableCell>
+                          <TableCell className="text-slate-700 text-xs py-4">{item.team || 'Allgemein'}</TableCell>
+                          <TableCell className="text-slate-500 text-xs truncate max-w-[120px] py-4" title={item.purpose}>{item.purpose}</TableCell>
+                          <TableCell className="text-right text-slate-900 font-mono text-xs font-bold py-4">CHF {item.amount.toFixed(2)}</TableCell>
+                          <TableCell className="text-right pr-6 py-4">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -463,9 +558,9 @@ export default function ExpenseCart({
               )}
 
               <Button
-                onClick={handleFinalSubmit}
+                onClick={handlePreSubmitCheck}
                 disabled={submitting}
-                className="w-full bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-bold py-6 text-base transition-all duration-200 rounded-lg shadow-md"
+                className="w-full bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-bold py-6 text-base transition-all duration-200 rounded-lg shadow-md cursor-pointer"
               >
                 {submitting ? (
                   <>
@@ -481,8 +576,107 @@ export default function ExpenseCart({
         </Card>
       </div>
     </div>
+  </div>
 
-    {/* New Member Dialog */}
+      {/* Profile Completion Dialog */}
+      <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900">
+          <DialogHeader className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 border border-blue-100 text-[#1B255F] shrink-0">
+              <CreditCard className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-lg font-bold text-slate-900">
+                IBAN & Name für Auszahlung angeben
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
+                Bevor deine Spesenabrechnung eingereicht werden kann, benötigen wir deinen Namen und deine IBAN für die Überweisung.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveProfileAndSubmit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label htmlFor="profile-name" className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block">
+                Vollständiger Name (Vor- & Nachname)
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  id="profile-name"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="Max Muster"
+                  required
+                  disabled={savingProfile}
+                  className="pl-10 border-slate-200 bg-white text-slate-900 text-xs focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="profile-iban" className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block">
+                IBAN für Auszahlung (Schweizer Konto)
+              </label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  id="profile-iban"
+                  value={profileIban}
+                  onChange={(e) => {
+                    const formatted = formatIBAN(e.target.value)
+                    if (formatted.replace(/\s/g, '').length <= 21) {
+                      setProfileIban(formatted)
+                    }
+                  }}
+                  placeholder="CH93 0000 0000 0000 0000 0"
+                  required
+                  disabled={savingProfile}
+                  className="pl-10 border-slate-200 bg-white text-slate-900 font-mono text-xs focus:border-[#1B255F] focus:ring-1 focus:ring-[#1B255F]"
+                />
+              </div>
+              <p className="text-[10px] text-slate-400">
+                Wird einmalig in deinem Profil gespeichert und für die Überweisung durch den Kassier verwendet.
+              </p>
+            </div>
+
+            {profileModalError && (
+              <div className="rounded-lg bg-red-50 p-3 text-[12px] text-red-800 border border-red-200 flex items-center gap-1.5">
+                <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                <span>{profileModalError}</span>
+              </div>
+            )}
+
+            <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={savingProfile}
+                onClick={() => setIsProfileModalOpen(false)}
+                className="text-xs border-slate-200 hover:bg-slate-50 h-9 rounded-lg px-4"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingProfile}
+                className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white font-semibold text-xs h-9 rounded-lg shadow-sm px-4 gap-1.5"
+              >
+                {savingProfile ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Speichere...</span>
+                  </>
+                ) : (
+                  <span>Speichern & Spesen einreichen</span>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Member Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl shadow-xl p-6 text-slate-900">
           <DialogHeader>
@@ -571,6 +765,6 @@ export default function ExpenseCart({
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
 
 interface MemberProfile {
@@ -28,9 +29,9 @@ interface MemberProfile {
 interface ReportItem {
   id: string
   created_at: string
-  status: string
-  user_id: string
+  status: 'offen' | 'ausbezahlt' | 'abgelehnt'
   total: number
+  user_id: string
 }
 
 function formatIban(iban: string): string {
@@ -57,6 +58,7 @@ export default function AdminMembersList({
   // Member History Modal State
   const [historyOpen, setHistoryOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null)
+  const [roleMemberToDemote, setRoleMemberToDemote] = useState<MemberProfile | null>(null)
 
   const handleCopyIban = (iban: string) => {
     navigator.clipboard.writeText(iban)
@@ -64,18 +66,7 @@ export default function AdminMembersList({
     setTimeout(() => setCopiedIban(null), 2000)
   }
 
-  const handleToggleRole = async (member: MemberProfile) => {
-    if (member.id === currentUserId) {
-      setError('Du kannst dir nicht selbst die Administrator-Rechte entziehen.')
-      return
-    }
-
-    const newRole = member.role === 'admin' ? 'user' : 'admin'
-    
-    if (newRole === 'user' && !confirm(`Möchtest du ${member.full_name} wirklich die Kassier-Rechte entziehen?`)) {
-      return
-    }
-
+  const executeRoleChange = (member: MemberProfile, newRole: 'user' | 'admin') => {
     setError(null)
     setActionUserId(member.id)
     
@@ -83,9 +74,25 @@ export default function AdminMembersList({
       const res = await updateUserRole(member.id, newRole)
       if (res.error) {
         setError(res.error)
+      } else {
+        setRoleMemberToDemote(null)
       }
       setActionUserId(null)
     })
+  }
+
+  const handleToggleRole = (member: MemberProfile) => {
+    if (member.id === currentUserId) {
+      setError('Du kannst dir nicht selbst die Administrator-Rechte entziehen.')
+      return
+    }
+
+    if (member.role === 'admin') {
+      setRoleMemberToDemote(member)
+      return
+    }
+
+    executeRoleChange(member, 'admin')
   }
 
   const handleOpenHistory = (member: MemberProfile) => {
@@ -347,6 +354,60 @@ export default function AdminMembersList({
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Demote Kassier Confirmation Dialog */}
+      <Dialog
+        open={!!roleMemberToDemote}
+        onOpenChange={(open) => {
+          if (!open && !isPending) {
+            setRoleMemberToDemote(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900">
+          <DialogHeader className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 border border-amber-100 text-amber-600 shrink-0">
+              <Shield className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-lg font-bold text-slate-900">
+                Kassier-Rechte entziehen?
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
+                Möchtest du <span className="font-semibold text-slate-800">{roleMemberToDemote?.full_name}</span> wirklich die Administrator- / Kassier-Rechte entziehen?
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => setRoleMemberToDemote(null)}
+              className="text-xs border-slate-200 hover:bg-slate-50 h-9 rounded-lg px-4"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isPending}
+              onClick={() => roleMemberToDemote && executeRoleChange(roleMemberToDemote, 'user')}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs h-9 rounded-lg shadow-sm px-4 gap-1.5"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Wird geändert...</span>
+                </>
+              ) : (
+                <span>Rechte entziehen</span>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

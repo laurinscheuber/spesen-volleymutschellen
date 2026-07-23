@@ -43,28 +43,12 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  // 2. If logged in, fetch profile to check role and onboarding status
-  const { data: profile, error } = await supabase
+  // 2. If logged in, fetch profile to check role
+  const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, iban, role')
+    .select('role')
     .eq('id', user.id)
     .single()
-
-  const hasIncompleteProfile = !profile || !profile.full_name || !profile.iban
-
-  // Onboarding redirection: if profile is incomplete, force them to '/profile'
-  if (hasIncompleteProfile && path !== '/profile' && !path.startsWith('/auth')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/profile'
-    return NextResponse.redirect(url)
-  }
-
-  // If profile is complete, don't let them go back to '/profile'
-  if (!hasIncompleteProfile && path === '/profile') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
 
   // Role redirection: if trying to access '/admin' but not an admin, redirect to '/dashboard'
   if (path.startsWith('/admin') && (!profile || profile.role !== 'admin')) {
@@ -73,7 +57,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If logged in and complete and visiting login page (/), redirect to appropriate dashboard
+  // If logged in and visiting login page (/), redirect to appropriate dashboard
   if (path === '/') {
     const url = request.nextUrl.clone()
     url.pathname = profile?.role === 'admin' ? '/admin' : '/dashboard'

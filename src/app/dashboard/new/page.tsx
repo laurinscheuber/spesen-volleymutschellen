@@ -12,11 +12,11 @@ export default async function NewExpensePage() {
     .eq('is_active', true)
     .order('name')
 
-  // Get current user profile for Layout context
+  // Get current user profile for Layout context and IBAN validation
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, email, role')
+    .select('id, full_name, email, iban, role')
     .eq('id', user?.id || '')
     .single()
 
@@ -48,6 +48,12 @@ export default async function NewExpensePage() {
           initialCategories={categories || []} 
           members={members}
           isAdmin={profile?.role === 'admin'}
+          currentUserProfile={{
+            id: user?.id || '',
+            full_name: profile?.full_name || '',
+            email: profile?.email || '',
+            iban: profile?.iban || '',
+          }}
         />
       </div>
     </AppLayout>

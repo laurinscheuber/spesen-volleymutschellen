@@ -96,28 +96,102 @@ export async function submitExpenseReport(
     return { error: 'Spesenpositionen konnten nicht hinzugefügt werden: ' + itemsError.message }
   }
 
-  // 3. Send email to Admin/Cashier
-  const cashierEmail = process.env.CASHIER_EMAIL || 'kassier@volleymutschellen.ch'
-  const origin = (await headers()).get('origin') || 'http://localhost:3000'
+  // 3. Send email to all Admin/Cashier accounts
+  const { data: adminProfiles } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('role', 'admin')
+
+  const adminEmails = Array.from(new Set(
+    (adminProfiles || [])
+      .map((p) => p.email)
+      .filter(Boolean) as string[]
+  ))
+
+  if (adminEmails.length === 0) {
+    adminEmails.push(process.env.CASHIER_EMAIL || 'kassier@volleymutschellen.ch')
+  }
+
+  // Fetch summary of all open pending reports waiting for approval
+  const { data: openReports } = await supabase
+    .from('expense_reports')
+    .select(`
+      id,
+      expense_items (
+        amount
+      )
+    `)
+    .eq('status', 'offen')
+
+  const totalOpenCount = openReports?.length || 0
+  const totalOpenSum = (openReports || []).reduce((sum, r: any) => {
+    const reportSum = (r.expense_items || []).reduce((iSum: number, item: any) => iSum + Number(item.amount), 0)
+    return sum + reportSum
+  }, 0).toFixed(2)
+
+  const origin = (await headers()).get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://spesen.volleymutschellen.ch'
   const adminUrl = `${origin}/admin/reports/${report.id}`
   const totalAmount = items.reduce((sum, item) => sum + Number(item.amount), 0).toFixed(2)
 
-  await sendEmail({
-    to: cashierEmail,
-    subject: `Neuer Spesenbericht von ${profile.full_name}`,
-    text: `Hallo Kassier,
+  const itemDetails = items
+    .map((item, idx) => `  ${idx + 1}. CHF ${Number(item.amount).toFixed(2)} – ${item.purpose || 'Kein Zweck'}${item.team ? ` (Team: ${item.team})` : ''}`)
+    .join('\n')
 
-${profile.full_name} (${profile.email || 'Keine E-Mail'}) hat einen neuen Spesenbericht eingereicht.
+  const emailText = `Hallo Kassier,
 
-Gesamtbetrag: CHF ${totalAmount}
-Anzahl Posten: ${items.length}
+${profile.full_name} (${profile.email || 'Keine E-Mail'}) hat einen neuen Spesenbericht über CHF ${totalAmount} (${items.length} Posten) eingereicht.
 
-Bitte überprüfe die Belege und verarbeite die Auszahlung hier:
+Eingereichte Positionen:
+${itemDetails}
+
+--------------------------------------------------
+Warteschlange Übersicht:
+Aktuell warten ${totalOpenCount} offene Spesenbericht(e) im Gesamtwert von CHF ${totalOpenSum} auf Prüfung.
+
+Hier direkt zum neuen Spesenbericht:
 ${adminUrl}
 
 Sportliche Grüsse,
-Volley Mutschellen Spesen-App`,
-  })
+Volley Mutschellen Spesen-App`
+
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; font-size: 14px; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">
+      <h2 style="color: #1B255F; margin-top: 0;">Neuer Spesenbericht eingetroffen</h2>
+      <p>Hallo Kassier,</p>
+      <p><strong>${profile.full_name}</strong> (${profile.email || 'Keine E-Mail'}) hat soeben einen neuen Spesenbericht eingereicht.</p>
+      
+      <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #1B255F; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0; font-weight: bold; color: #1B255F;">Gesamtbetrag: CHF ${totalAmount} (${items.length} Position${items.length === 1 ? '' : 'en'})</p>
+        <ul style="margin: 0; padding-left: 20px; color: #475569;">
+          ${items.map(item => `<li><strong>CHF ${Number(item.amount).toFixed(2)}</strong> - ${item.purpose || 'Kein Zweck'} ${item.team ? `<span style="color:#64748b;">(Team: ${item.team})</span>` : ''}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="background-color: #fefce8; padding: 12px 15px; border-radius: 8px; border: 1px solid #fef08a; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 13px; color: #854d0e;">
+          📋 <strong>Pendent-Übersicht:</strong> Aktuell warten <strong>${totalOpenCount} offene Spesenberichte</strong> (Gesamtwert: CHF ${totalOpenSum}) auf deine Prüfung und Auszahlung.
+        </p>
+      </div>
+
+      <p style="margin-top: 25px;">
+        <a href="${adminUrl}" style="background-color: #1B255F; color: #ffffff; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          Spesenbericht prüfen →
+        </a>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin-top: 30px;" />
+      <p style="font-size: 11px; color: #94a3b8; margin-bottom: 0;">Volley Mutschellen TSV Rudolfstetten • Spesen-App Notification</p>
+    </div>
+  `
+
+  for (const adminEmail of adminEmails) {
+    await sendEmail({
+      to: adminEmail,
+      subject: `Neuer Spesenbericht von ${profile.full_name} (CHF ${totalAmount})`,
+      text: emailText,
+      html: emailHtml,
+    })
+  }
 
   revalidatePath('/dashboard')
   return { success: true, reportId: report.id }

@@ -190,7 +190,7 @@ export default function AppLayout({ children, profile }: LayoutProps) {
       ]
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col relative">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col relative overflow-x-hidden w-full">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">

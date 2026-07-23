@@ -151,12 +151,12 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent border-slate-100">
-                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Eingereicht am</TableHead>
-                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Posten</TableHead>
-                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Ausbezahlt am</TableHead>
-                    <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Gesamtbetrag</TableHead>
-                    <TableHead className="w-24" />
+                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider pl-6 py-4">Eingereicht am</TableHead>
+                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Status</TableHead>
+                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Posten</TableHead>
+                    <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Ausbezahlt am</TableHead>
+                    <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Gesamtbetrag</TableHead>
+                    <TableHead className="w-24 text-right pr-6 py-4" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -166,24 +166,24 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
                       onClick={() => router.push(`/dashboard/reports/${report.id}`)}
                       className="border-slate-100 hover:bg-slate-50/50 group transition-colors cursor-pointer"
                     >
-                      <TableCell className="text-slate-700 font-mono text-xs">
+                      <TableCell className="text-slate-700 font-mono text-xs pl-6 py-4">
                         {new Date(report.created_at).toLocaleDateString('de-CH')}
                       </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusBadgeClass(report.status)}`}>
+                      <TableCell className="py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border whitespace-nowrap ${getStatusBadgeClass(report.status)}`}>
                           {getStatusLabel(report.status)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-slate-500 text-xs">
+                      <TableCell className="text-slate-500 text-xs py-4">
                         {report.itemsCount} {report.itemsCount === 1 ? 'Beleg' : 'Belege'}
                       </TableCell>
-                      <TableCell className="text-slate-500 font-mono text-xs">
+                      <TableCell className="text-slate-500 font-mono text-xs py-4">
                         {report.paid_at ? new Date(report.paid_at).toLocaleDateString('de-CH') : '–'}
                       </TableCell>
-                      <TableCell className="text-right text-slate-900 font-mono text-xs font-bold">
+                      <TableCell className="text-right text-slate-900 font-mono text-xs font-bold py-4">
                         CHF {report.total.toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right pr-6 py-4">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"

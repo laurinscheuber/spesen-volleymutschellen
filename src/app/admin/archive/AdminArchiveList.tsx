@@ -23,7 +23,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Eye, Search, Filter, X, Calendar, Wallet, Trash2, AlertCircle, Loader2, History } from 'lucide-react'
+import { Eye, Search, Filter, X, Calendar, Wallet, Trash2, AlertCircle, Loader2, History, FolderInput } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface FormattedReport {
@@ -203,9 +203,13 @@ export default function AdminArchiveList({
               </Button>
             )}
             <Link href="/admin/historical/new">
-              <Button size="sm" variant="outline" className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold h-8 rounded-lg gap-1.5 text-xs shadow-sm">
-                <History className="h-3.5 w-3.5 text-[#1B255F]" />
-                <span>Altspesen nacherfassen</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-500 hover:text-[#1B255F] hover:bg-slate-100 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                title="Altspesen nacherfassen / importieren"
+              >
+                <FolderInput className="h-4 w-4" />
               </Button>
             </Link>
           </div>

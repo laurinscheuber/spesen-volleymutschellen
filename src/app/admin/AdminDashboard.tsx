@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Eye, Download, ClipboardList, Wallet, FileDown, MoreVertical, Play, CheckCircle2, Search, Filter, X, Trash2, AlertCircle, Loader2, History } from 'lucide-react'
+import { Eye, Download, ClipboardList, Wallet, FileDown, MoreVertical, Play, CheckCircle2, Search, Filter, X, Trash2, AlertCircle, Loader2, History, FolderInput } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -244,13 +244,6 @@ export default function AdminDashboard({
                 </Button>
               </Link>
             )}
-
-            <Link href="/admin/historical/new">
-              <Button variant="outline" className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-5 rounded-lg shadow-sm gap-2 transition-all w-full sm:w-auto text-xs cursor-pointer">
-                <History className="h-4 w-4 text-[#1B255F]" />
-                Altspesen nacherfassen
-              </Button>
-            </Link>
           </div>
         </CardContent>
       </Card>
@@ -332,11 +325,29 @@ export default function AdminDashboard({
                 Filter zurücksetzen
               </Button>
             )}
+            <Link href="/admin/historical/new">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-500 hover:text-[#1B255F] hover:bg-slate-100 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                title="Altspesen nacherfassen / importieren"
+              >
+                <FolderInput className="h-4 w-4" />
+              </Button>
+            </Link>
+
             <DropdownMenu>
               <DropdownMenuTrigger className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg flex items-center justify-center cursor-pointer">
                 <MoreVertical className="h-4 w-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg text-slate-700">
+              <DropdownMenuContent align="end" className="w-52 bg-white border border-slate-200 shadow-lg rounded-lg text-slate-700">
+                <DropdownMenuItem 
+                  onClick={() => router.push('/admin/historical/new')}
+                  className="hover:bg-slate-50 text-xs font-semibold cursor-pointer py-2 px-3 gap-2 flex items-center text-[#1B255F]"
+                >
+                  <FolderInput className="h-3.5 w-3.5" />
+                  Altspesen nacherfassen
+                </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setExportDialogOpen(true)}
                   className="hover:bg-slate-50 text-xs font-semibold cursor-pointer py-2 px-3 gap-2 flex items-center"

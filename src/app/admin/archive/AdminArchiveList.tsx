@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { deleteExpenseReport } from '@/app/actions/expenses'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -13,7 +15,15 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select'
-import { Eye, Search, Filter, X, Calendar, Wallet } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Eye, Search, Filter, X, Calendar, Wallet, Trash2, AlertCircle, Loader2, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface FormattedReport {
@@ -43,6 +53,7 @@ export default function AdminArchiveList({
   reports: FormattedReport[]
   categories: CategoryOption[]
 }) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
@@ -50,6 +61,28 @@ export default function AdminArchiveList({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [visibleCount, setVisibleCount] = useState(25)
+
+  // Delete Dialog States
+  const [reportToDelete, setReportToDelete] = useState<FormattedReport | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleConfirmDelete = async () => {
+    if (!reportToDelete) return
+    const id = reportToDelete.id
+    setDeletingId(id)
+    setDeleteError(null)
+
+    const result = await deleteExpenseReport(id)
+    setDeletingId(null)
+
+    if (result.error) {
+      setDeleteError(result.error)
+    } else {
+      setReportToDelete(null)
+      router.refresh()
+    }
+  }
 
   // Extract all unique teams dynamically from data
   const uniqueTeams = useMemo(() => {
@@ -157,17 +190,25 @@ export default function AdminArchiveList({
             <Filter className="h-4 w-4 text-[#1B255F]" />
             Filter & Suche
           </CardTitle>
-          {(searchQuery || statusFilter !== 'all' || categoryFilter !== 'all' || teamFilter !== 'all' || startDate || endDate) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetFilters}
-              className="h-7 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg gap-1 font-bold px-2.5"
-            >
-              <X className="h-3 w-3" />
-              Zurücksetzen
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {(searchQuery || statusFilter !== 'all' || categoryFilter !== 'all' || teamFilter !== 'all' || startDate || endDate) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="h-7 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg gap-1 font-bold px-2.5"
+              >
+                <X className="h-3 w-3" />
+                Zurücksetzen
+              </Button>
+            )}
+            <Link href="/admin/historical/new">
+              <Button size="sm" variant="outline" className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold h-8 rounded-lg gap-1.5 text-xs shadow-sm">
+                <History className="h-3.5 w-3.5 text-[#1B255F]" />
+                <span>Altspesen nacherfassen</span>
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent className="pt-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -295,7 +336,11 @@ export default function AdminArchiveList({
                   </TableRow>
                 ) : (
                   reportsToShow.map((report) => (
-                    <TableRow key={report.id} className="border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <TableRow
+                      key={report.id}
+                      onClick={() => router.push(`/admin/reports/${report.id}`)}
+                      className="border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer"
+                    >
                       <TableCell className="text-slate-600 text-xs pl-6 py-4 font-mono">
                         {new Date(report.created_at).toLocaleDateString('de-CH')}
                       </TableCell>
@@ -327,11 +372,38 @@ export default function AdminArchiveList({
                         {getStatusBadge(report.status)}
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4">
-                        <Link href={`/admin/reports/${report.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/admin/reports/${report.id}`)
+                            }}
+                            className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+                            title="Details anzeigen"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                        </Link>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={deletingId === report.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteError(null)
+                              setReportToDelete(report)
+                            }}
+                            className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Löschen"
+                          >
+                            {deletingId === report.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -355,6 +427,101 @@ export default function AdminArchiveList({
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Spesen Confirmation Dialog */}
+      <Dialog
+        open={!!reportToDelete}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) {
+            setReportToDelete(null)
+            setDeleteError(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900">
+          <DialogHeader className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 border border-red-100 text-red-600 shrink-0">
+              <Trash2 className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-lg font-bold text-slate-900">
+                Spese löschen?
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
+                Möchtest du diese Spesenabrechnung wirklich löschen? Alle Belege dieser Abrechnung werden unwiderruflich gelöscht.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          {reportToDelete && (
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 my-1 text-xs">
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-slate-500 font-medium">Mitglied</span>
+                <span className="font-semibold text-slate-800">{reportToDelete.user_name}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-slate-500 font-medium">Eingereicht am</span>
+                <span className="font-mono font-semibold text-slate-800">
+                  {new Date(reportToDelete.created_at).toLocaleDateString('de-CH')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-slate-500 font-medium">Anzahl Posten</span>
+                <span className="font-semibold text-slate-800">
+                  {reportToDelete.itemsCount} {reportToDelete.itemsCount === 1 ? 'Beleg' : 'Belege'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+                <span className="text-slate-500 font-bold">Gesamtbetrag</span>
+                <span className="font-mono font-bold text-[#1B255F] text-sm">
+                  CHF {reportToDelete.total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {deleteError && (
+            <div className="rounded-lg bg-red-50 p-3 text-[13px] text-red-800 border border-red-200 flex items-center gap-1.5">
+              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+              <span>{deleteError}</span>
+            </div>
+          )}
+
+          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!!deletingId}
+              onClick={() => {
+                setReportToDelete(null)
+                setDeleteError(null)
+              }}
+              className="text-xs border-slate-200 hover:bg-slate-50 h-9 rounded-lg px-4"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!!deletingId}
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs h-9 rounded-lg shadow-sm px-4 gap-1.5 cursor-pointer"
+            >
+              {deletingId !== null ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Wird gelöscht...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Spese löschen</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

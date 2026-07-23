@@ -364,3 +364,96 @@ export async function deleteExpenseReport(reportId: string) {
   revalidatePath('/dashboard')
   return { success: true }
 }
+
+export async function createHistoricalExpenseReport(data: {
+  targetUserId: string
+  createdAt: string
+  paidAt?: string
+  status: 'ausbezahlt' | 'in_auftrag' | 'offen' | 'abgelehnt'
+  adminNotes?: string
+  items: Array<{
+    amount: number
+    date: string
+    purpose: string
+    category_id: string
+    receipt_url?: string
+    team?: string
+  }>
+}) {
+  const { targetUserId, createdAt, paidAt, status, adminNotes, items } = data
+  if (!items || items.length === 0) {
+    return { error: 'Die Spesenabrechnung muss mindestens eine Position enthalten.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Nicht authentifiziert.' }
+  }
+
+  // Guard: Only admins can create historical expense reports
+  const { data: currentUserProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+    return { error: 'Keine Berechtigung, historische Spesen nachzuerfassen.' }
+  }
+
+  const reportStatus = status || 'ausbezahlt'
+  const createdDateIso = createdAt ? new Date(createdAt).toISOString() : new Date().toISOString()
+  const paidDateIso = paidAt
+    ? new Date(paidAt).toISOString()
+    : reportStatus === 'ausbezahlt'
+    ? createdDateIso
+    : null
+
+  // 1. Insert report with historical attributes
+  const { data: report, error: reportError } = await supabase
+    .from('expense_reports')
+    .insert({
+      user_id: targetUserId,
+      status: reportStatus,
+      created_at: createdDateIso,
+      paid_at: paidDateIso,
+      admin_notes: adminNotes || null,
+    })
+    .select()
+    .single()
+
+  if (reportError) {
+    console.error('Failed to create historical report:', reportError)
+    return { error: 'Historische Spese konnte nicht erstellt werden: ' + reportError.message }
+  }
+
+  // 2. Insert items (receipt_url is optional for historical reports)
+  const itemsWithReport = items.map((item) => ({
+    report_id: report.id,
+    amount: item.amount,
+    date: item.date,
+    purpose: item.purpose,
+    category_id: item.category_id,
+    receipt_url: item.receipt_url || '',
+    team: item.team || null,
+  }))
+
+  const { error: itemsError } = await supabase
+    .from('expense_items')
+    .insert(itemsWithReport)
+
+  if (itemsError) {
+    console.error('Failed to insert historical items:', itemsError)
+    await supabase.from('expense_reports').delete().eq('id', report.id)
+    return { error: 'Spesenpositionen konnten nicht gespeichert werden: ' + itemsError.message }
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/archive')
+  revalidatePath('/admin/stats')
+  revalidatePath('/dashboard')
+
+  return { success: true, reportId: report.id }
+}

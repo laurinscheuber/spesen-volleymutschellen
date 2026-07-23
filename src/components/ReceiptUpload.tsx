@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import imageCompression from 'browser-image-compression'
-import { Camera, FileUp, Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
+import { Camera, FileUp, Loader2, CheckCircle2, AlertCircle, RefreshCw, Upload } from 'lucide-react'
 
 interface ReceiptUploadProps {
   onUploadComplete: (url: string) => void
@@ -18,6 +18,7 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
   const [fileName, setFileName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [uploaded, setUploaded] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -28,6 +29,7 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
       setUploaded(false)
       setFileName(null)
       setError(null)
+      setIsDragging(false)
       if (cameraInputRef.current) cameraInputRef.current.value = ''
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
@@ -37,6 +39,7 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
     setUploaded(false)
     setFileName(null)
     setError(null)
+    setIsDragging(false)
     if (cameraInputRef.current) cameraInputRef.current.value = ''
     if (fileInputRef.current) fileInputRef.current.value = ''
     onUploadComplete('')
@@ -101,6 +104,32 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
     }
   }
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!disabled && !compressing && !uploading && !uploaded) {
+      setIsDragging(true)
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    if (disabled || compressing || uploading || uploaded) return
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      processAndUploadFile(files[0])
+    }
+  }
+
   const isbusy = compressing || uploading
 
   return (
@@ -125,16 +154,27 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
       />
 
       <div
-        className={`flex flex-col items-center justify-center border border-dashed rounded-xl p-4 transition-colors ${
-          disabled || isbusy
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 transition-all ${
+          isDragging
+            ? 'border-[#1B255F] bg-[#1B255F]/10 scale-[1.01] shadow-inner ring-2 ring-[#1B255F]/20'
+            : disabled || isbusy
             ? 'bg-slate-50 border-slate-200 opacity-60'
             : uploaded
             ? 'border-emerald-500/40 bg-emerald-500/5'
-            : 'border-slate-200 bg-slate-50'
+            : 'border-slate-200 bg-slate-50 hover:bg-slate-100/60 hover:border-slate-300'
         }`}
       >
         <div className="flex flex-col items-center text-center space-y-2 w-full">
-          {compressing ? (
+          {isDragging ? (
+            <div className="py-3 flex flex-col items-center gap-1.5 pointer-events-none">
+              <Upload className="h-7 w-7 text-[#1B255F] animate-bounce" />
+              <span className="text-xs font-bold text-[#1B255F]">Beleg hier loslassen...</span>
+              <span className="text-[10px] text-slate-500">Bild oder PDF wird direkt hochgeladen</span>
+            </div>
+          ) : compressing ? (
             <div className="py-2 flex flex-col items-center gap-1.5">
               <Loader2 className="h-6 w-6 animate-spin text-[#1B255F]" />
               <span className="text-xs text-slate-500 font-medium">Komprimiere Bild...</span>
@@ -162,7 +202,9 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
             </div>
           ) : (
             <div className="w-full space-y-2">
-              <span className="text-xs font-semibold text-slate-700 block">Beleg hochladen oder fotografieren</span>
+              <span className="text-xs font-semibold text-slate-700 block">
+                Beleg reinziehen (Drag & Drop), fotografieren oder Datei wählen
+              </span>
               <div className="grid grid-cols-2 gap-2 w-full">
                 <button
                   type="button"
@@ -183,7 +225,9 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
                   <span>Datei / PDF</span>
                 </button>
               </div>
-              <span className="text-[10px] text-slate-400 block pt-0.5">Fotos & PDFs werden automatisch optimiert</span>
+              <span className="text-[10px] text-slate-400 block pt-0.5">
+                Fotos & PDFs werden automatisch optimiert
+              </span>
             </div>
           )}
         </div>

@@ -459,6 +459,7 @@ export default function HistoricalExpenseForm({
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block">Beleg / Quittung (Optional bei Altspesen)</label>
                   <ReceiptUpload
+                    value={receiptUrl}
                     disabled={isUploading}
                     onUploadStart={() => setIsUploading(true)}
                     onUploadComplete={(url) => {

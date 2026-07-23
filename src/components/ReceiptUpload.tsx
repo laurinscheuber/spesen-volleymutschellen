@@ -1,17 +1,18 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import imageCompression from 'browser-image-compression'
-import { Camera, FileUp, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Camera, FileUp, Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
 
 interface ReceiptUploadProps {
   onUploadComplete: (url: string) => void
   onUploadStart: () => void
   disabled?: boolean
+  value?: string
 }
 
-export default function ReceiptUpload({ onUploadComplete, onUploadStart, disabled }: ReceiptUploadProps) {
+export default function ReceiptUpload({ onUploadComplete, onUploadStart, disabled, value }: ReceiptUploadProps) {
   const [compressing, setCompressing] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
@@ -20,6 +21,26 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Automatically reset internal state when parent resets value (e.g. after adding item to cart)
+  useEffect(() => {
+    if (!value) {
+      setUploaded(false)
+      setFileName(null)
+      setError(null)
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }, [value])
+
+  const handleReset = () => {
+    setUploaded(false)
+    setFileName(null)
+    setError(null)
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    onUploadComplete('')
+  }
 
   const processAndUploadFile = async (file: File) => {
     setError(null)
@@ -124,10 +145,20 @@ export default function ReceiptUpload({ onUploadComplete, onUploadStart, disable
               <span className="text-xs text-slate-500 font-medium">Lade hoch...</span>
             </div>
           ) : uploaded ? (
-            <div className="py-1 flex flex-col items-center gap-1">
+            <div className="py-1 flex flex-col items-center gap-1.5 w-full">
               <CheckCircle2 className="h-6 w-6 text-emerald-500" />
               <span className="text-xs text-emerald-600 font-bold">Beleg hochgeladen</span>
-              <span className="text-[10px] text-slate-500 truncate max-w-[220px]">{fileName}</span>
+              {fileName && (
+                <span className="text-[10px] text-slate-500 truncate max-w-[220px] block">{fileName}</span>
+              )}
+              <button
+                type="button"
+                onClick={handleReset}
+                className="mt-1 text-[11px] text-slate-500 hover:text-red-600 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span>Anderen Beleg wählen</span>
+              </button>
             </div>
           ) : (
             <div className="w-full space-y-2">

@@ -3,13 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { updateReportStatus } from '@/app/actions/expenses'
+import { updateReportStatus, deleteExpenseReport } from '@/app/actions/expenses'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
 import { Textarea } from '@/components/ui/textarea'
-import { ChevronLeft, Calendar, User, Copy, Check, CheckCircle2, XCircle, Loader2, Info, Eye, ClipboardList, Play } from 'lucide-react'
+import { ChevronLeft, Calendar, User, Copy, Check, CheckCircle2, XCircle, Loader2, Info, Eye, ClipboardList, Play, Trash2, AlertCircle, X, MoreVertical } from 'lucide-react'
 
 interface Item {
   id: string
@@ -52,8 +58,9 @@ export default function AdminReportDetail({
   const [selectedReceipt, setSelectedReceipt] = useState<string>(report.items[0]?.receipt_url || '')
   const [copied, setCopied] = useState(false)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [adminNotes, setAdminNotes] = useState('')
-  const [submitting, setSubmitting] = useState<'in_auftrag' | 'payout' | 'reject' | null>(null)
+  const [submitting, setSubmitting] = useState<'in_auftrag' | 'payout' | 'reject' | 'delete' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleCopyIban = () => {
@@ -111,6 +118,20 @@ export default function AdminReportDetail({
     } else {
       setRejectDialogOpen(false)
       handleTransition()
+    }
+  }
+
+  const handleConfirmDeleteReport = async () => {
+    setSubmitting('delete')
+    setError(null)
+    const result = await deleteExpenseReport(report.id)
+    if (result.error) {
+      setError(result.error)
+      setSubmitting(null)
+    } else {
+      setDeleteDialogOpen(false)
+      router.push('/admin')
+      router.refresh()
     }
   }
 
@@ -185,60 +206,72 @@ export default function AdminReportDetail({
           <p className="text-[11px] text-slate-400 font-mono">Bericht ID: {report.id}</p>
         </div>
 
-        {report.status === 'offen' && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              disabled={submitting !== null}
-              onClick={() => setRejectDialogOpen(true)}
-              className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100/80 h-10 px-4 rounded-lg transition-colors shadow-sm"
-            >
-              Ablehnen
-            </Button>
-            <Button
-              disabled={submitting !== null}
-              onClick={handleSetInAuftrag}
-              className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center"
-            >
-              {submitting === 'in_auftrag' ? (
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-              ) : (
-                <ClipboardList className="h-4 w-4 text-white" />
-              )}
-              Zahlung erfasst
-            </Button>
-            <Button
-              disabled={submitting !== null}
-              onClick={handleApprove}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center"
-            >
-              {submitting === 'payout' ? (
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 text-white" />
-              )}
-              Ausbezahlen
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {report.status === 'offen' && (
+            <>
+              <Button
+                variant="outline"
+                disabled={submitting !== null}
+                onClick={() => setRejectDialogOpen(true)}
+                title="Spese ablehnen"
+                className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800 h-10 w-10 p-0 rounded-lg transition-colors shadow-sm flex items-center justify-center cursor-pointer shrink-0"
+              >
+                <X className="h-5 w-5" />
+              </Button>
 
-        {report.status === 'in_auftrag' && (
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500 hidden md:inline">Zahlung erfasst. Freigabe erfolgt automatisch in 24h.</span>
-            <Button
+              <Button
+                disabled={submitting !== null}
+                onClick={handleSetInAuftrag}
+                className="bg-[#1B255F] hover:bg-[#1B255F]/90 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center cursor-pointer"
+              >
+                {submitting === 'in_auftrag' ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                )}
+                <span>Zahlung erfasst</span>
+              </Button>
+            </>
+          )}
+
+          {report.status === 'in_auftrag' && (
+            <>
+              <span className="text-xs text-slate-500 hidden md:inline">Zahlung erfasst. Freigabe erfolgt automatisch in 24h.</span>
+              <Button
+                disabled={submitting !== null}
+                onClick={handleApprove}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center cursor-pointer"
+              >
+                {submitting === 'payout' ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                )}
+                <span>Sofort ausbezahlen</span>
+              </Button>
+            </>
+          )}
+
+          {/* 3-Dots Options Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
               disabled={submitting !== null}
-              onClick={handleApprove}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-4 rounded-lg font-semibold shadow-md gap-1.5 flex items-center"
+              className="inline-flex items-center justify-center h-10 w-10 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer shrink-0 shadow-sm transition-colors"
+              title="Weitere Optionen"
             >
-              {submitting === 'payout' ? (
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 text-white" />
-              )}
-              Jetzt auszahlen
-            </Button>
-          </div>
-        )}
+              <MoreVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 rounded-xl shadow-lg p-1">
+              <DropdownMenuItem
+                onClick={() => setDeleteDialogOpen(true)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium text-xs rounded-lg cursor-pointer flex items-center gap-2 p-2"
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+                <span>Spese löschen</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {error && (
@@ -322,12 +355,12 @@ export default function AdminReportDetail({
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent border-slate-100">
-                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
-                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
-                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
-                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
-                      <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
-                      <TableHead className="w-16" />
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider pl-6 py-4">Datum</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Kategorie</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Team</TableHead>
+                      <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Zweck</TableHead>
+                      <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Betrag</TableHead>
+                      <TableHead className="w-16 pr-6 py-4 text-right" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -339,18 +372,18 @@ export default function AdminReportDetail({
                           selectedReceipt === item.receipt_url ? 'bg-slate-50 border-l-2 border-l-[#1B255F]' : ''
                         }`}
                       >
-                        <TableCell className="text-slate-700 font-mono text-xs">
+                        <TableCell className="text-slate-700 font-mono text-xs pl-6 py-4">
                           {new Date(item.date).toLocaleDateString('de-CH')}
                         </TableCell>
-                        <TableCell className="text-slate-800 text-xs font-semibold">{item.category_name}</TableCell>
-                        <TableCell className="text-slate-700 text-xs">{item.team || 'Allgemein'}</TableCell>
-                        <TableCell className="text-slate-500 text-xs truncate max-w-[120px]" title={item.purpose}>
+                        <TableCell className="text-slate-800 text-xs font-semibold py-4">{item.category_name}</TableCell>
+                        <TableCell className="text-slate-700 text-xs py-4">{item.team || 'Allgemein'}</TableCell>
+                        <TableCell className="text-slate-500 text-xs truncate max-w-[140px] py-4" title={item.purpose}>
                           {item.purpose}
                         </TableCell>
-                        <TableCell className="text-right text-slate-900 font-mono text-xs font-bold">
+                        <TableCell className="text-right text-slate-900 font-mono text-xs font-bold py-4">
                           CHF {item.amount.toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right pr-6 py-4">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -458,6 +491,75 @@ export default function AdminReportDetail({
                 <Loader2 className="h-4 w-4 animate-spin text-white" />
               ) : (
                 'Jetzt ablehnen'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Report Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => { if (!open && submitting !== 'delete') setDeleteDialogOpen(false) }}>
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900">
+          <DialogHeader className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 border border-red-100 text-red-600 shrink-0">
+              <Trash2 className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-lg font-bold text-slate-900">
+                Spese löschen?
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
+                Möchtest du diese Spesenabrechnung wirklich löschen? Alle Belege dieser Abrechnung werden unwiderruflich gelöscht.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 my-1 text-xs">
+            <div className="flex justify-between items-center text-slate-600">
+              <span className="text-slate-500 font-medium">Mitglied</span>
+              <span className="font-semibold text-slate-800">{report.user_name}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+              <span className="text-slate-500 font-medium">Eingereicht am</span>
+              <span className="font-mono font-semibold text-slate-800">
+                {new Date(report.created_at).toLocaleDateString('de-CH')}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+              <span className="text-slate-500 font-bold">Gesamtbetrag</span>
+              <span className="font-mono font-bold text-[#1B255F] text-sm">
+                CHF {report.total.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={submitting === 'delete'}
+              onClick={() => setDeleteDialogOpen(false)}
+              className="text-xs border-slate-200 hover:bg-slate-50 h-9 rounded-lg px-4"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={submitting === 'delete'}
+              onClick={handleConfirmDeleteReport}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs h-9 rounded-lg shadow-sm px-4 gap-1.5 cursor-pointer"
+            >
+              {submitting === 'delete' ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Wird gelöscht...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Spese löschen</span>
+                </>
               )}
             </Button>
           </DialogFooter>

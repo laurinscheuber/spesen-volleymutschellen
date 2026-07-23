@@ -6,8 +6,8 @@ import Lightbox from '@/components/Lightbox'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChevronLeft, Calendar, FileText, CheckCircle, XCircle, Info, Trash2 } from 'lucide-react'
-import { deleteExpenseReport } from '@/app/actions/expenses'
+import { ChevronLeft, Calendar, FileText, CheckCircle, XCircle, Info } from 'lucide-react'
+import DeleteReportButton from './DeleteReportButton'
 
 export default async function UserReportDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
@@ -86,12 +86,6 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
     }
   }
 
-  async function handleDelete() {
-    'use server'
-    await deleteExpenseReport(params.id)
-    redirect('/dashboard')
-  }
-
   return (
     <AppLayout profile={profile || { full_name: 'Nutzer', email: '', role: 'user' }}>
       <div className="space-y-6 max-w-4xl mx-auto w-full">
@@ -113,18 +107,15 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
             <p className="text-[11px] text-slate-400 font-mono">ID: {report.id}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+
             {getStatusBadge(report.status)}
             {(report.status === 'offen' || report.status === 'abgelehnt') && (
-              <form action={handleDelete}>
-                <Button
-                  type="submit"
-                  variant="outline"
-                  className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 h-9 px-4 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1.5"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Bericht löschen
-                </Button>
-              </form>
+              <DeleteReportButton
+                reportId={report.id}
+                itemsCount={items.length}
+                totalAmount={totalAmount}
+                createdAt={report.created_at}
+              />
             )}
           </div>
         </div>
@@ -201,27 +192,27 @@ export default async function UserReportDetailPage(props: { params: Promise<{ id
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent border-slate-100">
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Datum</TableHead>
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Kategorie</TableHead>
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Team</TableHead>
-                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Zweck</TableHead>
-                        <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Betrag</TableHead>
-                        <TableHead className="w-28" />
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider pl-6 py-4">Datum</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Kategorie</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Team</TableHead>
+                        <TableHead className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Zweck</TableHead>
+                        <TableHead className="text-right text-slate-500 font-semibold text-[11px] uppercase tracking-wider py-4">Betrag</TableHead>
+                        <TableHead className="w-28 text-right pr-6 py-4" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => (
                         <TableRow key={item.id} className="border-slate-100 hover:bg-slate-50/50 transition-colors">
-                          <TableCell className="text-slate-700 font-mono text-xs">
+                          <TableCell className="text-slate-700 font-mono text-xs pl-6 py-4">
                             {new Date(item.date).toLocaleDateString('de-CH')}
                           </TableCell>
-                          <TableCell className="text-slate-800 text-xs font-semibold">{item.categories?.name}</TableCell>
-                          <TableCell className="text-slate-700 text-xs">{item.team || 'Allgemein'}</TableCell>
-                          <TableCell className="text-slate-500 text-xs whitespace-pre-wrap">{item.purpose}</TableCell>
-                          <TableCell className="text-right text-slate-900 font-mono text-xs font-bold">
+                          <TableCell className="text-slate-800 text-xs font-semibold py-4">{item.categories?.name}</TableCell>
+                          <TableCell className="text-slate-700 text-xs py-4">{item.team || 'Allgemein'}</TableCell>
+                          <TableCell className="text-slate-500 text-xs whitespace-pre-wrap py-4">{item.purpose}</TableCell>
+                          <TableCell className="text-right text-slate-900 font-mono text-xs font-bold py-4">
                             CHF {Number(item.amount).toFixed(2)}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right pr-6 py-4">
                             <Lightbox url={item.receipt_url} label="Beleg" />
                           </TableCell>
                         </TableRow>

@@ -8,6 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Trash2, Eye, Loader2, AlertCircle, FileSpreadsheet, TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface Report {
   id: string
@@ -21,13 +29,13 @@ interface Report {
 
 export default function DashboardList({ reports }: { reports: Report[] }) {
   const router = useRouter()
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Möchtest du diesen Spesenbericht wirklich löschen? Alle Belege dieser Abrechnung werden gelöscht.')) {
-      return
-    }
+  const handleConfirmDelete = async () => {
+    if (!reportToDelete) return
+    const id = reportToDelete.id
 
     setDeletingId(id)
     setError(null)
@@ -37,6 +45,7 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
     if (result.error) {
       setError(result.error)
     } else {
+      setReportToDelete(null)
       router.refresh()
     }
   }
@@ -152,7 +161,11 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
                 </TableHeader>
                 <TableBody>
                   {reports.map((report) => (
-                    <TableRow key={report.id} className="border-slate-100 hover:bg-slate-50/50 group transition-colors">
+                    <TableRow
+                      key={report.id}
+                      onClick={() => router.push(`/dashboard/reports/${report.id}`)}
+                      className="border-slate-100 hover:bg-slate-50/50 group transition-colors cursor-pointer"
+                    >
                       <TableCell className="text-slate-700 font-mono text-xs">
                         {new Date(report.created_at).toLocaleDateString('de-CH')}
                       </TableCell>
@@ -172,23 +185,29 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Link href={`/dashboard/reports/${report.id}`}>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-slate-400 hover:text-[#1B255F] hover:bg-slate-50 h-7 w-7 rounded-md"
-                              title="Details anzeigen"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/dashboard/reports/${report.id}`)
+                            }}
+                            className="text-slate-400 hover:text-[#1B255F] hover:bg-slate-100 h-7 w-7 rounded-md"
+                            title="Details anzeigen"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           {(report.status === 'offen' || report.status === 'abgelehnt') && (
                             <Button
                               variant="ghost"
                               size="icon"
                               disabled={deletingId === report.id}
-                              onClick={() => handleDelete(report.id)}
-                              className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-7 w-7 rounded-md"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setError(null)
+                                setReportToDelete(report)
+                              }}
+                              className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-7 w-7 rounded-md transition-colors"
                               title="Löschen"
                             >
                               {deletingId === report.id ? (
@@ -208,6 +227,97 @@ export default function DashboardList({ reports }: { reports: Report[] }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Spesen Confirmation Dialog */}
+      <Dialog
+        open={!!reportToDelete}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) {
+            setReportToDelete(null)
+            setError(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900">
+          <DialogHeader className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 border border-red-100 text-red-600 shrink-0">
+              <Trash2 className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-lg font-bold text-slate-900">
+                Spese löschen?
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
+                Möchtest du diese Spesenabrechnung wirklich löschen? Alle Belege dieser Abrechnung werden unwiderruflich gelöscht.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          {reportToDelete && (
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 my-1 text-xs">
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-slate-500 font-medium">Eingereicht am</span>
+                <span className="font-mono font-semibold text-slate-800">
+                  {new Date(reportToDelete.created_at).toLocaleDateString('de-CH')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="text-slate-500 font-medium">Anzahl Posten</span>
+                <span className="font-semibold text-slate-800">
+                  {reportToDelete.itemsCount} {reportToDelete.itemsCount === 1 ? 'Beleg' : 'Belege'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-200/80">
+                <span className="text-slate-500 font-bold">Gesamtbetrag</span>
+                <span className="font-mono font-bold text-[#1B255F] text-sm">
+                  CHF {reportToDelete.total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-[13px] text-red-800 border border-red-200 flex items-center gap-1.5">
+              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!!deletingId}
+              onClick={() => {
+                setReportToDelete(null)
+                setError(null)
+              }}
+              className="text-xs border-slate-200 hover:bg-slate-50 h-9 rounded-lg px-4"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!!deletingId}
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs h-9 rounded-lg shadow-sm px-4 gap-1.5 cursor-pointer"
+            >
+              {deletingId !== null ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Wird gelöscht...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Spese löschen</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

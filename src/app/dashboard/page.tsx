@@ -61,7 +61,7 @@ export default async function DashboardPage() {
       <div className="space-y-6 max-w-5xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
           <div className="space-y-1">
-            <h1 className="text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight">Meine Spesenabrechnungen</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight break-words">Meine Spesenabrechnungen</h1>
             <p className="text-[13px] text-slate-500">Übersicht über deine eingereichten Berichte und deren Status.</p>
           </div>
           <div className="sm:text-right">

@@ -40,7 +40,7 @@ export default async function NewExpensePage() {
     <AppLayout profile={profile || { full_name: 'Nutzer', email: '', role: 'user' }}>
       <div className="space-y-6 max-w-5xl mx-auto w-full">
         <div className="flex flex-col gap-1 border-b border-slate-200 pb-4">
-          <h1 className="text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight">Spesen einreichen</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight break-words">Spesen einreichen</h1>
           <p className="text-[13px] text-slate-500">Erstelle eine neue Sammelabrechnung und füge deine Belege hinzu.</p>
         </div>
 

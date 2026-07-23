@@ -63,7 +63,7 @@ export default async function AdminMembersPage() {
     <AppLayout profile={profile}>
       <div className="space-y-6 max-w-5xl mx-auto w-full">
         <div className="flex flex-col gap-1 border-b border-slate-200 pb-4 mb-2">
-          <h1 className="text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight">Mitglieder & IBANs</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-[27px] font-black uppercase tracking-wider text-[#1B255F] leading-tight break-words">Mitglieder & IBANs</h1>
           <p className="text-[13px] text-slate-500">Übersicht aller Vereinsmitglieder, hinterlegten Bankdaten und Vergabe von Kassier-Rechten.</p>
         </div>
 
